@@ -7,9 +7,9 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 :root{
-  --navy:#1C2D4E;
-  --navy-2:#233A63;
-  --accent:#60A5FA;
+  --navy:#17233C;
+  --navy-2:#1D2C4A;
+  --accent:#5B93D6;
   --bg:#F8F5EF;
   --card:#FFFFFF;
   --text:#1F2937;
@@ -20,48 +20,55 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif;background:var(--bg);color:var(--text)}
-body{display:flex;min-height:100vh}
+body{display:grid;grid-template-columns:280px 1fr;align-items:stretch;min-height:100vh}
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer}
 
 /* ── SIDEBAR ── */
 #sidebar{
-  width:280px;min-width:280px;height:100vh;position:sticky;top:0;
+  min-width:0;
   background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
-  color:#E5EDFB;display:flex;flex-direction:column;overflow-y:auto;
+  color:#C7D3E6;display:flex;flex-direction:column;overflow:hidden;
   box-shadow:2px 0 12px rgba(0,0,0,.15);z-index:20;
 }
-#sidebar-header{padding:16px 16px 8px;display:flex;flex-direction:column;gap:8px}
-#sidebar-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
-#nav-links{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+#sidebar-header{
+  flex-shrink:0;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+#sidebar-title{font-size:13.5px;font-weight:700;color:#E8EDF6;letter-spacing:-.2px;white-space:nowrap}
+#nav-links{display:flex;flex-direction:row;gap:6px;flex-shrink:0}
 #dash-nav-btn,#custom-nav-btn{
-  display:flex;align-items:center;gap:6px;padding:9px 12px;border-radius:8px;
-  font-size:13px;font-weight:600;color:#CBD5E1;background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1);transition:.15s;
+  display:flex;align-items:center;gap:4px;padding:6px 9px;border-radius:7px;white-space:nowrap;
+  font-size:11.5px;font-weight:600;color:#B4C1D8;background:rgba(255,255,255,.05)
+  ;border:1px solid rgba(255,255,255,.08);transition:.15s;
 }
-#dash-nav-btn:hover,#custom-nav-btn:hover{background:rgba(255,255,255,.14);color:#fff}
-#dash-nav-btn.active{background:rgba(96,165,250,.22);color:#fff;border-color:rgba(96,165,250,.4)}
+#dash-nav-btn:hover,#custom-nav-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+#dash-nav-btn.active{background:rgba(91,147,214,.24);color:#fff;border-color:rgba(91,147,214,.4)}
 
-#subject-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px}
+#sidebar-scroll{flex:1;min-height:0;overflow-y:visible;overscroll-behavior:contain}
+#subject-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:12px 14px}
 .subj-tab{
-  padding:6px 10px;border-radius:7px;font-size:12px;font-weight:600;
-  background:rgba(255,255,255,.06);color:#B9C6E0;border:1px solid rgba(255,255,255,.08);
+  padding:7px 4px;border-radius:6px;font-size:11.5px;font-weight:600;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:rgba(255,255,255,.05);color:#AAB9D2;border:1px solid rgba(255,255,255,.07);
 }
-.subj-tab.active{background:var(--accent);color:#0B1830;border-color:var(--accent)}
+.subj-tab:nth-child(1),.subj-tab:nth-child(2),.subj-tab:nth-child(3){grid-column:span 2}
+.subj-tab:nth-child(4),.subj-tab:nth-child(5){grid-column:span 3}
+.subj-tab.active{background:rgba(91,147,214,.32);color:#fff;border-color:rgba(91,147,214,.55)}
 
-#unit-list{flex:1;overflow-y:auto;padding:4px 10px 20px}
+#unit-list{padding:4px 10px 20px}
 .chapter-label{
-  font-size:11px;font-weight:700;color:#7C93C2;text-transform:uppercase;
+  font-size:11px;font-weight:700;color:#6D80A0;text-transform:uppercase;
   letter-spacing:.4px;padding:14px 10px 6px;
 }
 .unit-item{
   display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;
-  font-size:13px;color:#D6E0F5;margin-bottom:2px;border-left:3px solid transparent;
+  font-size:13px;color:#C3CEE2;margin-bottom:2px;border-left:3px solid transparent;
   cursor:pointer;transition:.12s;
 }
-.unit-item:hover{background:rgba(255,255,255,.06)}
-.unit-item.active{background:rgba(96,165,250,.14);border-left-color:var(--accent);color:#fff;font-weight:600}
-.unit-item.done .unit-title{text-decoration:line-through;color:#8FA3C8}
+.unit-item:hover{background:rgba(255,255,255,.05)}
+.unit-item.active{background:rgba(91,147,214,.16);border-left-color:var(--accent);color:#fff;font-weight:600}
+.unit-item.done .unit-title{text-decoration:line-through;color:#7C8FAE}
 .unit-item .unit-title{flex:1}
 .unit-item .check{color:#4ADE80;font-size:12px}
 .priority-badge{
@@ -92,9 +99,9 @@ button{font-family:inherit;cursor:pointer}
 #sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:19}
 
 #content-area{
-  flex:1;padding:24px 28px 60px;display:flex;flex-direction:column;align-items:center;
+  flex:1;padding:24px 32px 60px;
 }
-#content-area>*{width:100%;max-width:1080px}
+#content-area>*{max-width:1080px;margin-left:auto;margin-right:auto}
 
 .placeholder{color:var(--text-muted);font-size:14.5px;text-align:center;padding:80px 20px}
 
@@ -157,8 +164,10 @@ button{font-family:inherit;cursor:pointer}
 
 /* Mobile */
 @media (max-width:768px){
-  #sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .2s;width:280px;z-index:30}
+  body{display:block}
+  #sidebar{position:fixed;left:0;top:0;bottom:0;height:auto;transform:translateX(-100%);transition:transform .2s;width:280px;z-index:30}
   #sidebar.open{transform:translateX(0)}
+  #sidebar-scroll{overflow-y:auto}
   #sidebar-overlay.show{display:block}
   #hamburger-btn{display:block}
   #top-bar{padding:10px 12px;gap:8px}
@@ -174,14 +183,16 @@ button{font-family:inherit;cursor:pointer}
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
 <div id="sidebar">
   <div id="sidebar-header">
-    <div id="sidebar-title">📘 의공기사 학습노트</div>
+    <div id="sidebar-title">📘 의공기사 필기</div>
     <div id="nav-links">
-      <button id="dash-nav-btn" onclick="showDashboard()">📊 전체진도</button>
-      <a id="custom-nav-btn" href="custom.html">➕ 내 문제 &amp; 복습</a>
+      <button id="dash-nav-btn" onclick="showDashboard()">📊 진도</button>
+      <a id="custom-nav-btn" href="custom.html">➕ 복습</a>
     </div>
   </div>
-  <div id="subject-tabs"></div>
-  <div id="unit-list"></div>
+  <div id="sidebar-scroll">
+    <div id="subject-tabs"></div>
+    <div id="unit-list"></div>
+  </div>
 </div>
 
 <div id="main">
