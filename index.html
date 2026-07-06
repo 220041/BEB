@@ -53,6 +53,8 @@ button{font-family:inherit;cursor:pointer}
 #book-nav-btn:hover,#dash-nav-btn:hover,#custom-nav-btn:hover{background:rgba(255,255,255,.18);color:#fff}
 #dash-nav-btn.active,#book-nav-btn.active{background:rgba(255,255,255,.24);color:#fff;border-color:rgba(255,255,255,.4)}
 #hamburger-btn{display:none;background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;flex-shrink:0}
+#sidebar-collapse-btn{display:flex;align-items:center;justify-content:center;background:none;border:none;color:#fff;font-size:15px;padding:4px 8px;flex-shrink:0;opacity:.85}
+#sidebar-collapse-btn:hover{opacity:1}
 #top-bar-title{
   font-size:14.5px;font-weight:700;color:#fff;flex:1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -86,6 +88,8 @@ button{font-family:inherit;cursor:pointer}
 
 /* ── BODY ROW (사이드바 + 본문) ── */
 #body-row{display:grid;grid-template-columns:280px 1fr;align-items:stretch;min-height:calc(100vh - 58px)}
+#body-row.sidebar-collapsed{grid-template-columns:0 1fr}
+#body-row.sidebar-collapsed #sidebar{display:none}
 
 /* ── SIDEBAR ── */
 #sidebar{
@@ -133,6 +137,25 @@ button{font-family:inherit;cursor:pointer}
   flex:1;padding:24px 32px 60px;background:var(--bg);
 }
 #content-area>*{max-width:1080px;margin-left:auto;margin-right:auto}
+#content-area.center-mode{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  min-height:calc(100vh - 58px - 84px);
+}
+#content-area.center-mode>*{width:100%}
+
+/* ── 챕터(단원) 이동 네비게이션 ── */
+.chapter-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:32px;padding-top:20px}
+.chapter-nav-btn{
+  padding:9px 16px;border-radius:8px;border:1px solid var(--card-border);background:var(--card);
+  font-size:13.5px;font-weight:600;color:var(--text);
+}
+.chapter-nav-btn:hover{background:#F0EEE7}
+.chapter-nav-btn.disabled{color:var(--text-muted);background:transparent;border-color:transparent;cursor:default}
+.chapter-nav-top{
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--card-border);background:var(--card);
+  font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.chapter-nav-top:hover{background:#F0EEE7}
 
 .placeholder{color:var(--text-muted);font-size:14.5px;text-align:center;padding:80px 20px}
 
@@ -157,15 +180,25 @@ button{font-family:inherit;cursor:pointer}
 
 /* Flashcards */
 .fc-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0}
-.fc-card{
-  width:100%;max-width:640px;min-height:220px;background:var(--card);border:1px solid var(--card-border);
-  border-radius:14px;box-shadow:var(--card-shadow);display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:32px;font-size:16px;line-height:1.7;cursor:pointer;
+.fc-card-outer{width:100%;max-width:640px;perspective:1000px}
+.fc-card{width:100%;min-height:220px;position:relative;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
+.fc-card.flipped{transform:rotateY(180deg)}
+.fc-front,.fc-back{
+  position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 28px;text-align:center;box-shadow:var(--card-shadow);overflow:auto;
 }
+.fc-front{background:var(--card);border:1px solid var(--card-border);color:var(--text)}
+.fc-back{background:var(--navy);color:#fff;transform:rotateY(180deg)}
+.fc-label{font-size:11px;font-weight:700;letter-spacing:.1em;opacity:.5;margin-bottom:12px}
+.fc-text{font-size:16px;font-weight:600;line-height:1.7}
+.fc-hint{font-size:12px;color:var(--text-muted);margin-top:10px;opacity:.7}
+.fc-back .fc-hint{color:rgba(255,255,255,.7)}
 .fc-progress{font-size:13px;color:var(--text-muted)}
 .fc-nav{display:flex;gap:10px}
 .fc-nav button{padding:8px 18px;border-radius:8px;border:1px solid var(--card-border);background:var(--card);font-size:13.5px;font-weight:600}
 .fc-nav button:hover{background:#F0EEE7}
+.fc-kbd-hint{font-size:11.5px;color:var(--text-muted);opacity:.75}
 
 /* Quiz */
 .quiz-item{margin-bottom:22px}
@@ -230,6 +263,7 @@ button{font-family:inherit;cursor:pointer}
   #sidebar.open{transform:translateX(0)}
   #sidebar-overlay.show{display:block}
   #hamburger-btn{display:block}
+  #sidebar-collapse-btn{display:none}
   #app-header-inner{display:flex;align-items:center;height:auto;min-height:52px;padding:8px 10px;gap:8px;flex-wrap:nowrap}
   #app-header-nav{border-right:none;padding:0;gap:4px}
   #app-header-main{padding:0;gap:8px;flex:1;min-width:0}
@@ -250,6 +284,7 @@ button{font-family:inherit;cursor:pointer}
   <div id="app-header-inner">
     <div id="app-header-nav">
       <button id="hamburger-btn" onclick="toggleSidebar()">☰</button>
+      <button id="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="사이드바 숨기기/보이기">◀</button>
       <button id="dash-nav-btn" onclick="showDashboard()" title="진도">📊 <span class="label-text">진도</span></button>
       <button id="book-nav-btn" onclick="showBookOverview()" title="교재">📘 <span class="label-text">교재</span></button>
       <a id="custom-nav-btn" href="custom.html" title="학습">➕ <span class="label-text">학습</span></a>
@@ -413,13 +448,32 @@ function renderTopBar(){
 function renderContent(){
   const area = document.getElementById('content-area');
   if(!currentUnit){
+    area.classList.remove('center-mode');
     area.innerHTML = '<div class="placeholder">왼쪽 사이드바에서 단원을 선택하세요</div>';
     return;
   }
+  area.classList.toggle('center-mode', currentTab === 'flashcards' || currentTab === 'quiz');
   if(currentTab === 'concept') renderConcept(area);
   else if(currentTab === 'examtips') renderExamTips(area);
   else if(currentTab === 'flashcards') renderFlashcards(area);
   else if(currentTab === 'quiz') renderQuiz(area);
+}
+
+// ─── 챕터(단원) 이동 네비게이션 (콘텐츠 하단) ─────────────────────────────────
+function renderChapterNavHtml(){
+  const list = getFlatUnitList();
+  const idx = currentUnit ? list.findIndex(u => u.unit_id === currentUnit.unit_id) : -1;
+  const prevUnit = idx > 0 ? list[idx - 1] : null;
+  const nextUnit = (idx > -1 && idx < list.length - 1) ? list[idx + 1] : null;
+  return '<div class="chapter-nav">' +
+    (prevUnit
+      ? '<button class="chapter-nav-btn" onclick="selectUnit(\'' + prevUnit.unit_id + '\')">← 이전챕터</button>'
+      : '<span class="chapter-nav-btn disabled">이전챕터 없음</span>') +
+    '<button class="chapter-nav-top" onclick="window.scrollTo({top:0,behavior:\'smooth\'})" title="화면 제일 상단으로">🔝</button>' +
+    (nextUnit
+      ? '<button class="chapter-nav-btn" onclick="selectUnit(\'' + nextUnit.unit_id + '\')">다음챕터 →</button>'
+      : '<span class="chapter-nav-btn disabled">다음챕터 없음</span>') +
+  '</div>';
 }
 
 function isTtsSubject(){
@@ -445,6 +499,7 @@ function renderConcept(area){
   if(u.memorization){
     html += '<div class="card"><div class="section-title">암기 포인트</div><div class="md-content">' + mdRender(u.memorization) + '</div></div>';
   }
+  html += renderChapterNavHtml();
   area.innerHTML = html;
   if(isTtsSubject()) makeSpeakable(area);
 }
@@ -452,6 +507,7 @@ function renderConcept(area){
 function renderExamTips(area){
   const u = currentUnit;
   let html = '<div class="card"><div class="section-title">시험 포인트</div><div class="md-content">' + mdRender(u.exam_tips || '') + '</div></div>';
+  html += renderChapterNavHtml();
   area.innerHTML = html;
   if(isTtsSubject()) makeSpeakable(area);
 }
@@ -469,12 +525,18 @@ function renderFlashcards(area){
   area.innerHTML =
     '<div class="fc-wrap">' +
       '<div class="fc-progress">' + (fcIdx + 1) + ' / ' + cards.length + '</div>' +
-      '<div class="fc-card" id="fc-card" onclick="fcFlip()"></div>' +
+      '<div class="fc-card-outer">' +
+        '<div class="fc-card" id="fc-card" onclick="fcFlip()">' +
+          '<div class="fc-front"><div class="fc-label">Q</div><div class="fc-text" id="fc-front-text"></div><div class="fc-hint">클릭하여 뒤집기 (S)</div></div>' +
+          '<div class="fc-back"><div class="fc-label">A</div><div class="fc-text" id="fc-back-text"></div></div>' +
+        '</div>' +
+      '</div>' +
       '<div class="fc-nav">' +
         '<button onclick="fcMove(-1)">← 이전</button>' +
         '<button onclick="fcFlip()">뒤집기</button>' +
         '<button onclick="fcMove(1)">다음 →</button>' +
       '</div>' +
+      '<div class="fc-kbd-hint">A = 이전　S = 뒤집기　D = 다음</div>' +
     '</div>';
   updateFcCard();
 }
@@ -483,8 +545,12 @@ function updateFcCard(){
   const cards = currentUnit.flashcards || [];
   const c = cards[fcIdx];
   const cardEl = document.getElementById('fc-card');
+  const frontEl = document.getElementById('fc-front-text');
+  const backEl = document.getElementById('fc-back-text');
   if(!cardEl || !c) return;
-  cardEl.innerHTML = fcShowingAnswer ? mdRender(c.a) : mdRender(c.q);
+  cardEl.classList.toggle('flipped', fcShowingAnswer);
+  if(frontEl) frontEl.innerHTML = mdRender(c.q);
+  if(backEl) backEl.innerHTML = mdRender(c.a);
 }
 
 function fcFlip(){
@@ -689,6 +755,15 @@ function closeSidebar(){
   document.getElementById('sidebar-overlay').classList.remove('show');
 }
 
+// ─── DESKTOP 사이드바 숨기기 ──────────────────────────────────────────────────
+function toggleSidebarCollapse(){
+  const row = document.getElementById('body-row');
+  row.classList.toggle('sidebar-collapsed');
+  const collapsed = row.classList.contains('sidebar-collapsed');
+  const btn = document.getElementById('sidebar-collapse-btn');
+  if(btn){ btn.textContent = collapsed ? '▶' : '◀'; btn.title = collapsed ? '사이드바 보이기' : '사이드바 숨기기'; }
+}
+
 // ─── KEYBOARD NAVIGATION ────────────────────────────────────────────────────
 function getFlatUnitList(){
   const subject = DATA.subjects[currentSubjectIdx];
@@ -717,11 +792,12 @@ function switchTab(delta){
 document.addEventListener('keydown', (e) => {
   const tag = (document.activeElement && document.activeElement.tagName) || '';
   if(tag === 'INPUT' || tag === 'TEXTAREA') return;
-  if(e.key === 'ArrowDown'){ e.preventDefault(); moveUnit(1); }
-  else if(e.key === 'ArrowUp'){ e.preventDefault(); moveUnit(-1); }
-  else if(e.key === 'ArrowLeft'){ e.preventDefault(); switchTab(-1); }
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); switchTab(-1); }
   else if(e.key === 'ArrowRight'){ e.preventDefault(); switchTab(1); }
   else if(e.key === ' ' && currentTab === 'flashcards'){ e.preventDefault(); fcFlip(); }
+  else if(currentTab === 'flashcards' && (e.key === 'a' || e.key === 'A')){ e.preventDefault(); fcMove(-1); }
+  else if(currentTab === 'flashcards' && (e.key === 's' || e.key === 'S')){ e.preventDefault(); fcFlip(); }
+  else if(currentTab === 'flashcards' && (e.key === 'd' || e.key === 'D')){ e.preventDefault(); fcMove(1); }
   else if(e.key === 'Enter' && currentTab === 'quiz'){ e.preventDefault(); answerNextQuiz(); }
 });
 
