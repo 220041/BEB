@@ -24,7 +24,7 @@
 *{box-sizing:border-box}
 html{overflow-y:scroll;scrollbar-gutter:stable;background:var(--bg)}
 html,body{margin:0;padding:0;height:100%;font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif;color:var(--text)}
-body{position:relative;min-height:100vh;max-width:1424px;margin:0 auto;background:var(--bg);box-shadow:0 0 40px rgba(28,45,78,.06)}
+body{position:relative;min-height:100vh;max-width:1280px;margin:0 auto;background:var(--bg);box-shadow:0 0 40px rgba(28,45,78,.06)}
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer}
 
@@ -35,7 +35,7 @@ button{font-family:inherit;cursor:pointer}
   background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;
 }
 #app-header-inner{
-  max-width:1424px;margin:0 auto;height:58px;box-sizing:border-box;
+  max-width:1280px;margin:0 auto;height:58px;box-sizing:border-box;
   display:grid;grid-template-columns:280px 1fr;align-items:stretch;
 }
 #app-header-nav{
@@ -88,7 +88,7 @@ button{font-family:inherit;cursor:pointer}
 
 /* ── BODY ROW (사이드바 + 본문) ── */
 #body-row{display:grid;grid-template-columns:280px 1fr;align-items:stretch;min-height:calc(100vh - 58px)}
-#body-row.sidebar-collapsed{grid-template-columns:0 1fr}
+#body-row.sidebar-collapsed{grid-template-columns:1fr}
 #body-row.sidebar-collapsed #sidebar{display:none}
 
 /* ── SIDEBAR ── */
@@ -136,7 +136,7 @@ button{font-family:inherit;cursor:pointer}
 #content-area{
   flex:1;padding:24px 32px 60px;background:var(--bg);
 }
-#content-area>*{max-width:1080px;margin-left:auto;margin-right:auto}
+#content-area>*{max-width:1000px;margin-left:auto;margin-right:auto}
 #content-area.center-mode{
   display:flex;flex-direction:column;justify-content:center;align-items:center;
   min-height:calc(100vh - 58px - 84px);
@@ -146,11 +146,17 @@ button{font-family:inherit;cursor:pointer}
 /* ── 챕터(단원) 이동 네비게이션 ── */
 .chapter-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:32px;padding-top:20px}
 .chapter-nav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:9px 16px;border-radius:8px;border:1px solid var(--card-border);background:var(--card);
-  font-size:13.5px;font-weight:600;color:var(--text);
+  font-size:13.5px;font-weight:600;color:var(--text);max-width:220px;
 }
 .chapter-nav-btn:hover{background:#F0EEE7}
 .chapter-nav-btn.disabled{color:var(--text-muted);background:transparent;border-color:transparent;cursor:default}
+.chapter-nav-dir{font-size:12px;color:var(--text-muted)}
+.chapter-nav-title{
+  font-size:13.5px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:200px;
+}
 .chapter-nav-top{
   width:36px;height:36px;border-radius:50%;border:1px solid var(--card-border);background:var(--card);
   font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -161,8 +167,17 @@ button{font-family:inherit;cursor:pointer}
 
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:22px 24px;box-shadow:var(--card-shadow);margin-bottom:16px}
 .section-title{font-size:16px;font-weight:700;margin:0 0 10px;padding-bottom:8px;border-bottom:2px solid var(--line)}
-.md-content{font-size:14.5px;line-height:1.75}
-.md-content h1,.md-content h2,.md-content h3{margin-top:20px}
+.md-content{font-size:15.5px;line-height:1.9;color:var(--text)}
+.md-content p{margin:0 0 14px}
+.md-content ul,.md-content ol{margin:0 0 14px;padding-left:22px}
+.md-content li{margin-bottom:6px}
+.md-content li>ul,.md-content li>ol{margin-top:6px;margin-bottom:0}
+.md-content strong{font-weight:800;color:var(--navy)}
+.md-content h1,.md-content h2,.md-content h3{margin:26px 0 12px;font-weight:800;color:var(--navy);line-height:1.4}
+.md-content h1:first-child,.md-content h2:first-child,.md-content h3:first-child{margin-top:0}
+.md-content h1{font-size:19px}
+.md-content h2{font-size:17.5px}
+.md-content h3{font-size:16px}
 .md-content table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px}
 .md-content th{background:var(--navy);color:#fff;padding:8px 10px;font-size:12.5px}
 .md-content td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
@@ -181,12 +196,12 @@ button{font-family:inherit;cursor:pointer}
 /* Flashcards */
 .fc-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0}
 .fc-card-outer{width:100%;max-width:640px;perspective:1000px}
-.fc-card{width:100%;min-height:220px;position:relative;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
+.fc-card{width:100%;min-height:220px;display:grid;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
 .fc-card.flipped{transform:rotateY(180deg)}
 .fc-front,.fc-back{
-  position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:32px 28px;text-align:center;box-shadow:var(--card-shadow);overflow:auto;
+  grid-area:1/1;backface-visibility:hidden;border-radius:14px;
+  box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 28px;text-align:center;box-shadow:var(--card-shadow);min-height:220px;
 }
 .fc-front{background:var(--card);border:1px solid var(--card-border);color:var(--text)}
 .fc-back{background:var(--navy);color:#fff;transform:rotateY(180deg)}
@@ -212,6 +227,9 @@ button{font-family:inherit;cursor:pointer}
 .quiz-choice.correct{border-color:#22C55E;background:rgba(34,197,94,.12)}
 .quiz-choice.wrong{border-color:#EF4444;background:rgba(239,68,68,.12)}
 .quiz-explain{font-size:13px;color:var(--text-muted);margin-top:8px;padding:10px 12px;background:#F5F3EC;border-radius:8px;display:none}
+.quiz-result{margin-top:8px;padding:9px 14px;border-radius:8px;font-weight:700;font-size:13.5px;display:none}
+.quiz-result.ok{background:rgba(34,197,94,.14);color:#15803D}
+.quiz-result.bad{background:rgba(239,68,68,.14);color:#B91C1C}
 
 .tts-banner{font-size:12px;color:var(--text-muted);background:#EEF2FA;padding:8px 12px;border-radius:8px;margin-bottom:14px}
 
@@ -284,10 +302,10 @@ button{font-family:inherit;cursor:pointer}
   <div id="app-header-inner">
     <div id="app-header-nav">
       <button id="hamburger-btn" onclick="toggleSidebar()">☰</button>
-      <button id="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="사이드바 숨기기/보이기">◀</button>
       <button id="dash-nav-btn" onclick="showDashboard()" title="진도">📊 <span class="label-text">진도</span></button>
       <button id="book-nav-btn" onclick="showBookOverview()" title="교재">📘 <span class="label-text">교재</span></button>
       <a id="custom-nav-btn" href="custom.html" title="학습">➕ <span class="label-text">학습</span></a>
+      <button id="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="사이드바 숨기기/보이기">◀</button>
     </div>
     <div id="app-header-main">
       <div id="top-bar-title">왼쪽 사이드바에서 단원을 선택하세요</div>
@@ -467,12 +485,12 @@ function renderChapterNavHtml(){
   const nextUnit = (idx > -1 && idx < list.length - 1) ? list[idx + 1] : null;
   return '<div class="chapter-nav">' +
     (prevUnit
-      ? '<button class="chapter-nav-btn" onclick="selectUnit(\'' + prevUnit.unit_id + '\')">← 이전챕터</button>'
-      : '<span class="chapter-nav-btn disabled">이전챕터 없음</span>') +
+      ? '<button class="chapter-nav-btn" onclick="selectUnit(\'' + prevUnit.unit_id + '\')"><span class="chapter-nav-dir">← 이전챕터</span><span class="chapter-nav-title">' + escapeHtmlIdx(prevUnit.title) + '</span></button>'
+      : '<span class="chapter-nav-btn disabled"><span class="chapter-nav-dir">이전챕터 없음</span></span>') +
     '<button class="chapter-nav-top" onclick="window.scrollTo({top:0,behavior:\'smooth\'})" title="화면 제일 상단으로">🔝</button>' +
     (nextUnit
-      ? '<button class="chapter-nav-btn" onclick="selectUnit(\'' + nextUnit.unit_id + '\')">다음챕터 →</button>'
-      : '<span class="chapter-nav-btn disabled">다음챕터 없음</span>') +
+      ? '<button class="chapter-nav-btn" onclick="selectUnit(\'' + nextUnit.unit_id + '\')"><span class="chapter-nav-dir">다음챕터 →</span><span class="chapter-nav-title">' + escapeHtmlIdx(nextUnit.title) + '</span></button>'
+      : '<span class="chapter-nav-btn disabled"><span class="chapter-nav-dir">다음챕터 없음</span></span>') +
   '</div>';
 }
 
@@ -585,6 +603,7 @@ function renderQuiz(area){
     (q.choices || []).forEach((choice, ci) => {
       html += '<div class="quiz-choice" id="qc-' + qi + '-' + ci + '" onclick="answerQuiz(' + qi + ',' + ci + ')">' + (ci + 1) + '. ' + choice + '</div>';
     });
+    html += '<div class="quiz-result" id="qr-' + qi + '"></div>';
     html += '<div class="quiz-explain" id="qe-' + qi + '">' + mdRender(q.explanation || '') + '</div>';
     html += '</div>';
   });
@@ -596,11 +615,18 @@ function answerQuiz(qIdx, choiceIdx){
   const q = (currentUnit.questions || [])[qIdx];
   quizAnswers[qIdx] = choiceIdx;
   const correctIdx = q.answer - 1;
+  const isCorrect = choiceIdx === correctIdx;
   for(let ci = 0; ci < q.choices.length; ci++){
     const el = document.getElementById('qc-' + qIdx + '-' + ci);
     if(!el) continue;
     if(ci === correctIdx) el.classList.add('correct');
     else if(ci === choiceIdx) el.classList.add('wrong');
+  }
+  const resultEl = document.getElementById('qr-' + qIdx);
+  if(resultEl){
+    resultEl.style.display = 'block';
+    resultEl.className = 'quiz-result ' + (isCorrect ? 'ok' : 'bad');
+    resultEl.textContent = isCorrect ? '✅ 정답입니다' : ('❌ 오답입니다 (정답: ' + (correctIdx + 1) + '번)');
   }
   const explainEl = document.getElementById('qe-' + qIdx);
   if(explainEl) explainEl.style.display = 'block';

@@ -52,6 +52,11 @@ button{font-family:inherit}
 
 /* LAYOUT */
 #page-content{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+#page-content.center-mode{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  min-height:calc(100vh - 58px - 84px);
+}
+#page-content.center-mode>*{width:100%}
 
 /* CARDS / FORMS */
 .card{background:var(--card-bg);border-radius:12px;padding:20px 24px;margin-bottom:16px;box-shadow:var(--card-shadow);border:1px solid var(--card-border)}
@@ -122,9 +127,9 @@ button{font-family:inherit}
 .review-progress{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:14px}
 #session-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 .fc-card-outer{width:100%;max-width:560px;perspective:1000px}
-.fc-card{width:100%;min-height:200px;position:relative;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
+.fc-card{width:100%;min-height:200px;display:grid;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
 .fc-card.flipped{transform:rotateY(180deg)}
-.fc-front,.fc-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.fc-front,.fc-back{grid-area:1/1;box-sizing:border-box;backface-visibility:hidden;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);min-height:200px}
 .fc-front{background:var(--card-bg);border:2px solid var(--section-line)}
 .fc-back{background:var(--table-header);color:#fff;transform:rotateY(180deg)}
 .fc-label{font-size:11px;font-weight:700;letter-spacing:.1em;opacity:.5;margin-bottom:12px}
@@ -415,6 +420,7 @@ function switchPageTab(tab) {
 // ─── ADD TAB ─────────────────────────────────────────────────────────────────
 function renderAddTab() {
   const el = document.getElementById('page-content');
+  el.classList.remove('center-mode');
   el.innerHTML = `
     <div class="card">
       <div class="card-title">새 항목 등록</div>
@@ -715,6 +721,7 @@ let listSearch = '';
 
 function renderListTab() {
   const el = document.getElementById('page-content');
+  el.classList.remove('center-mode');
   const tags = Array.from(new Set(items.map(it => it.tag).filter(Boolean))).sort();
   el.innerHTML = `
     <div class="card">
@@ -864,6 +871,7 @@ function renderReviewTab() {
   quizAnswered = false;
   document.removeEventListener('keydown', handleSessionKeydown);
   const el = document.getElementById('page-content');
+  el.classList.remove('center-mode');
   if (!items.length) {
     el.innerHTML = `<div class="card"><div class="empty-hint">등록된 항목이 없습니다. 먼저 "➕ 등록" 탭에서 문제나 카드를 추가해주세요.</div></div>`;
     return;
@@ -963,6 +971,7 @@ function flashGradeButton(kind, cb) {
 
 function renderReviewSession() {
   const el = document.getElementById('page-content');
+  el.classList.add('center-mode');
   if (reviewIdx >= reviewQueue.length) {
     el.innerHTML = `<div class="card"><div class="session-summary">
       <div class="big">${reviewCorrect} / ${reviewQueue.length}</div>
@@ -986,6 +995,7 @@ function renderReviewSession() {
 function renderFlashcardSession(item) {
   reviewFlipped = false;
   const wrap = document.getElementById('session-wrap');
+  const expHtml = item.explanation ? `<div class="explanation">${escapeHtml(item.explanation)}</div>` : '';
   wrap.innerHTML = `
     <div class="fc-card-outer">
       <div class="fc-card" id="session-fc-card" onclick="flipSessionCard()">
@@ -1000,19 +1010,7 @@ function renderFlashcardSession(item) {
         </div>
       </div>
     </div>
-    <div id="session-grade-area"></div>
-  `;
-}
-
-function flipSessionCard() {
-  reviewFlipped = !reviewFlipped;
-  const item = reviewQueue[reviewIdx];
-  const card = document.getElementById('session-fc-card');
-  if (card) card.classList.toggle('flipped', reviewFlipped);
-  const gradeArea = document.getElementById('session-grade-area');
-  if (reviewFlipped && gradeArea) {
-    const expHtml = item.explanation ? `<div class="explanation">${escapeHtml(item.explanation)}</div>` : '';
-    gradeArea.innerHTML = `
+    <div id="session-grade-area" style="visibility:hidden">
       ${expHtml}
       <div class="grade-row">
         <button class="grade-icon-btn star" onclick="gradeCurrent(true)" title="안다 (1)">★</button>
@@ -1020,10 +1018,16 @@ function flipSessionCard() {
       </div>
       <div class="grade-kbd-hint">1 = know　2 = confuse</div>
       <div class="skip-link" onclick="skipCurrent()">건너뛰고 다음 → (Enter)</div>
-    `;
-  } else if (gradeArea) {
-    gradeArea.innerHTML = '';
-  }
+    </div>
+  `;
+}
+
+function flipSessionCard() {
+  reviewFlipped = !reviewFlipped;
+  const card = document.getElementById('session-fc-card');
+  if (card) card.classList.toggle('flipped', reviewFlipped);
+  const gradeArea = document.getElementById('session-grade-area');
+  if (gradeArea) gradeArea.style.visibility = reviewFlipped ? 'visible' : 'hidden';
 }
 
 function gradeCurrent(correct) {
@@ -1061,9 +1065,16 @@ function renderQuizSession(item) {
       <div class="choices" id="session-choices">
         ${item.choices.map((c, ci) => `<button class="choice-btn" data-ci="${ci + 1}" onclick="pickSessionChoice(${ci + 1})">${ci + 1}. ${escapeHtml(c)}</button>`).join('')}
       </div>
-      <div id="session-result" style="display:none"></div>
-      <div class="explanation" id="session-exp" style="display:none">${escapeHtml(item.explanation || '')}</div>
-      <div id="session-next-area" style="display:none"></div>
+      <div id="session-result" class="session-result" style="visibility:hidden">✅ 정답입니다</div>
+      <div class="explanation" id="session-exp" style="${item.explanation ? 'visibility:hidden' : 'display:none'}">${escapeHtml(item.explanation || '')}</div>
+      <div id="session-next-area" style="visibility:hidden">
+        <div class="grade-row">
+          <button class="grade-icon-btn star" onclick="assessConfidence(true)" title="자신있게 맞음 (1)">★</button>
+          <button class="grade-icon-btn check" onclick="assessConfidence(false)" title="헷갈렸음 (2)">✓</button>
+        </div>
+        <div class="grade-kbd-hint">1 = know　2 = confuse</div>
+        <div class="skip-link" onclick="nextReviewItem()">건너뛰고 다음 → (Enter)</div>
+      </div>
     </div>
   `;
 }
@@ -1083,22 +1094,14 @@ function pickSessionChoice(ci) {
   const correctNow = ci === item.answer;
   const resultEl = document.getElementById('session-result');
   if (resultEl) {
-    resultEl.style.display = 'block';
-    resultEl.className = correctNow ? 'session-result ok' : 'session-result bad';
+    resultEl.style.visibility = 'visible';
+    resultEl.className = 'session-result ' + (correctNow ? 'ok' : 'bad');
     resultEl.textContent = correctNow ? '✅ 정답입니다' : `❌ 오답입니다 (정답: ${item.answer}번)`;
   }
   const exp = document.getElementById('session-exp');
-  if (exp && item.explanation) exp.style.display = 'block';
+  if (exp && item.explanation) exp.style.visibility = 'visible';
   const nextArea = document.getElementById('session-next-area');
-  nextArea.style.display = 'block';
-  nextArea.innerHTML = `
-    <div class="grade-row">
-      <button class="grade-icon-btn star" onclick="assessConfidence(true)" title="자신있게 맞음 (1)">★</button>
-      <button class="grade-icon-btn check" onclick="assessConfidence(false)" title="헷갈렸음 (2)">✓</button>
-    </div>
-    <div class="grade-kbd-hint">1 = know　2 = confuse</div>
-    <div class="skip-link" onclick="nextReviewItem()">건너뛰고 다음 → (Enter)</div>
-  `;
+  if (nextArea) nextArea.style.visibility = 'visible';
   recordResult(item, correctNow);
   if (correctNow) reviewCorrect++; else reviewWrong++;
 }
