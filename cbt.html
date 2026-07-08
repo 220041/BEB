@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT 모의고사 - 의공기사 교재</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sidebar-bg:#1C2D4E;
+  --sidebar-bg-deep:#141F38;
+  --accent:#60A5FA;
+  --accent-bg:rgba(96,165,250,.14);
+  --content-bg:#FDFCF8;
+  --card-bg:#FFFFFF;
+  --card-border:rgba(15,23,42,.06);
+  --card-shadow:0 1px 2px rgba(16,24,40,.04),0 4px 12px rgba(16,24,40,.05);
+  --table-header:#1C2D4E;
+  --section-line:#E0E8F4;
+  --text-main:#1a1a2e;
+  --text-muted:#6b7280;
+  --star:#F59E0B;
+  --star-bg:#FEF3C7;
+  --danger:#EF4444;
+  --danger-bg:#FEF2F2;
+  --success:#10B981;
+  --success-bg:#ECFDF5;
+}
+html{overflow-y:scroll;scrollbar-gutter:stable}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--content-bg);color:var(--text-main);min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+
+/* TOP BAR */
+#topbar{background:linear-gradient(180deg,var(--sidebar-bg) 0%,var(--sidebar-bg-deep) 100%);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+#topbar-inner{max-width:1080px;margin:0 auto;height:58px;box-sizing:border-box;padding:0 20px;display:flex;align-items:center;gap:20px;flex-wrap:nowrap}
+#back-link{font-size:13px;color:#CBD5E1;font-weight:600;padding:6px 10px;border-radius:7px;transition:background .12s}
+#back-link:hover{background:rgba(255,255,255,.08);color:#fff}
+#topbar-inner h1{font-size:16px;font-weight:800;flex:1;min-width:120px}
+#page-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.ptab{padding:9px 14px;font-size:13.5px;font-weight:700;color:#CBD5E1;background:none;border:none;border-radius:8px;cursor:pointer;transition:all .12s}
+.ptab:hover{background:rgba(255,255,255,.08);color:#fff}
+.ptab.active{background:var(--accent-bg);color:#fff;box-shadow:inset 0 0 0 1px rgba(96,165,250,.3)}
+#auth-status{display:flex;align-items:center;gap:8px;order:3;font-size:12px;color:#CBD5E1}
+#auth-status button{color:#CBD5E1;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.06)}
+#auth-status button:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.4)}
+.auth-wrap{max-width:420px;margin:60px auto}
+
+/* LAYOUT */
+#page-content{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+#page-content.wide{max-width:1200px}
+#page-content.center-mode{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  min-height:calc(100vh - 58px - 84px);
+}
+#page-content.center-mode>*{width:100%}
+
+/* CARDS / FORMS */
+.card{background:var(--card-bg);border-radius:12px;padding:20px 24px;margin-bottom:16px;box-shadow:var(--card-shadow);border:1px solid var(--card-border)}
+.card-title{font-size:14.5px;font-weight:700;color:var(--table-header);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--section-line)}
+.card-sub{font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6}
+.form-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.form-row label{font-size:13px;font-weight:700;color:var(--text-main)}
+.form-row input[type=text],.form-row input[type=number],.form-row input[type=password],.form-row textarea,.form-row select{font-size:14.5px;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-family:inherit;color:var(--text-main);background:#fff;width:100%;box-sizing:border-box}
+.form-row input[type=text],.form-row input[type=number],.form-row input[type=password]{height:40px}
+.form-row input:focus,.form-row textarea:focus,.form-row select:focus{outline:none;border-color:var(--accent)}
+.form-row textarea{resize:vertical;min-height:64px;line-height:1.5}
+.form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.form-grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.choice-input-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.choice-input-row input[type=radio]{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent)}
+.choice-input-row input[type=text]{flex:1}
+
+.btn{padding:10px 18px;border-radius:8px;border:none;font-weight:700;font-size:14px;cursor:pointer;transition:all .12s}
+.btn-primary{background:#2563EB;color:#fff}
+.btn-primary:hover{background:#1D4ED8}
+.btn-secondary{background:#E5E7EB;color:#374151}
+.btn-secondary:hover{background:#D1D5DB}
+.btn-danger{background:var(--danger-bg);color:#991B1B}
+.btn-danger:hover{background:#FEE2E2}
+.btn-ghost{background:none;color:var(--text-muted);border:1.5px solid #E5E7EB}
+.btn-ghost:hover{background:#F3F4F6}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:7px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.empty-hint{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14.5px}
+.sample-box{background:#0F172A;color:#E2E8F0;padding:14px 16px;border-radius:8px;font-family:'Consolas',monospace;font-size:12.5px;line-height:1.6;overflow-x:auto;white-space:pre;margin-bottom:10px}
+.import-textarea{width:100%;min-height:120px;font-family:'Consolas',monospace;font-size:12.5px;padding:12px;border:1.5px solid #E5E7EB;border-radius:8px}
+.msg{padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-top:10px}
+.msg.ok{background:var(--success-bg);color:#065F46}
+.msg.err{background:var(--danger-bg);color:#991B1B}
+
+/* SET LIST */
+.set-row{display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid var(--section-line)}
+.set-row:last-child{border-bottom:none}
+.set-body{flex:1;min-width:0}
+.set-name{font-size:14.5px;font-weight:700;margin-bottom:4px}
+.set-meta{font-size:12.5px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap}
+.set-actions{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{background:none;border:none;font-size:15px;cursor:pointer;color:var(--text-muted);padding:4px;border-radius:6px}
+.icon-btn:hover{background:#F3F4F6;color:var(--text-main)}
+
+/* TEMP QUESTION LIST (manage tab) */
+.tmp-q-row{display:flex;gap:10px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--section-line);font-size:13px}
+.tmp-q-row:last-child{border-bottom:none}
+.tmp-q-num{font-weight:700;color:var(--table-header);flex-shrink:0;width:26px}
+.tmp-q-text{flex:1;line-height:1.5}
+.tmp-q-choices{color:var(--text-muted);font-size:12px;margin-top:3px}
+.tag-chip{background:#EEF2F9;color:#1C2D4E;padding:2px 8px;border-radius:10px;font-weight:600;font-size:12px}
+
+/* HISTORY TABLE */
+.hist-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.hist-table th{background:#F3F4F6;color:var(--text-muted);font-weight:700;text-align:left;padding:9px 10px;font-size:12.5px}
+.hist-table td{padding:10px 10px;border-bottom:1px solid var(--section-line)}
+.hist-pass{color:#065F46;font-weight:700}
+.hist-fail{color:#991B1B;font-weight:700}
+
+/* ── CBT EXAM SCREEN ── */
+.cbt-frame{border:3px solid #1a1a2e;border-radius:6px;overflow:hidden;background:#fff}
+.cbt-exam-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 18px;background:#fff;border-bottom:2px solid var(--accent)}
+.cbt-exam-title{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+.cbt-badge{width:30px;height:30px;border-radius:50%;background:var(--table-header);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.cbt-exam-info{text-align:right;font-size:12.5px;color:var(--text-muted);line-height:1.5}
+.cbt-timer{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;color:var(--table-header)}
+.cbt-timer.warn{color:#DC2626}
+.cbt-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 18px;background:#F3F4F6;border-bottom:1px solid var(--section-line);font-size:12.5px}
+.cbt-toolbar .fsz-group{display:flex;align-items:center;gap:8px}
+.fsz-btn{padding:5px 11px;border-radius:6px;border:1.5px solid #E5E7EB;background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:var(--text-muted)}
+.fsz-btn.active{border-color:var(--accent);background:var(--accent-bg);color:#1C2D4E}
+.cbt-count-info{color:var(--text-muted);font-weight:600}
+.cbt-count-info b{color:#DC2626}
+.cbt-body{display:flex}
+.cbt-question-area{flex:1;padding:24px 26px;border-right:1px solid var(--section-line);min-width:0;overflow-y:auto}
+.cbt-q-block{padding-bottom:22px;margin-bottom:22px;border-bottom:1px dashed var(--section-line)}
+.cbt-q-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.cbt-q-text{font-weight:700;line-height:1.7;margin-bottom:18px;white-space:pre-wrap}
+.cbt-choice{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:8px;
+  border:1.5px solid #E5E7EB;margin-bottom:9px;transition:all .12s;line-height:1.5;
+}
+.cbt-choice.picked{border-color:var(--accent);background:var(--accent-bg);font-weight:700}
+.cbt-choice-num{width:22px;height:22px;border-radius:50%;border:1.5px solid #9CA3AF;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#6B7280;cursor:pointer;transition:all .12s}
+.cbt-choice-num:hover{border-color:var(--accent);background:var(--accent-bg);color:var(--table-header)}
+.cbt-choice.picked .cbt-choice-num{background:var(--accent);border-color:var(--accent);color:#fff}
+.cbt-answer-sheet{width:230px;flex-shrink:0;padding:18px 14px;background:#F9FAFB;display:flex;flex-direction:column;overflow:hidden}
+.cbt-answer-sheet-title{background:var(--table-header);color:#fff;text-align:center;padding:8px;border-radius:6px;font-size:12.5px;font-weight:700;margin-bottom:10px;flex-shrink:0}
+.cbt-answer-grid{display:flex;flex-direction:column;gap:5px;flex:1;min-height:0;overflow-y:auto}
+.cbt-answer-cell{
+  display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:6px;font-size:12px;
+  cursor:pointer;background:#fff;border:1px solid #E5E7EB;
+}
+.cbt-answer-cell.current{background:#F1F2F4}
+.cbt-answer-cell .num{font-weight:700;color:var(--text-muted);width:16px;flex-shrink:0;text-align:center}
+.cbt-answer-dots{display:flex;gap:4px}
+.cbt-answer-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid #D1D5DB;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#9CA3AF;line-height:1}
+.cbt-answer-dot.marked{background:var(--accent);border-color:var(--accent);color:#fff}
+.cbt-footer{display:flex;align-items:stretch;background:#F3F4F6;border-top:1px solid var(--section-line)}
+.cbt-footer-left{flex:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-right:1px solid var(--section-line)}
+.cbt-footer-right{width:230px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px}
+.cbt-footer-mid{font-weight:700;font-size:13px;color:var(--text-muted)}
+.cbt-unanswered-popup{
+  position:absolute;background:#fff;border:2px solid var(--accent);border-radius:8px;padding:14px 16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:40;width:min(420px,90vw);
+}
+.cbt-unanswered-popup .hint{font-size:12px;color:#DC2626;border-bottom:1px dashed #DC2626;padding-bottom:8px;margin-bottom:10px}
+.cbt-unanswered-grid{display:flex;flex-wrap:wrap;gap:6px}
+.cbt-unanswered-num{padding:6px 10px;border-radius:6px;border:1px solid #E5E7EB;background:#F9FAFB;font-size:12.5px;font-weight:700;cursor:pointer}
+.cbt-unanswered-num:hover{border-color:var(--accent);background:var(--accent-bg)}
+.cbt-close-x{position:absolute;top:8px;right:10px;cursor:pointer;color:var(--text-muted);font-size:14px}
+
+/* RESULT SCREEN */
+.result-wrap{max-width:560px;margin:20px auto}
+.result-card{border:2px solid var(--accent);border-radius:10px;padding:24px 26px;text-align:center}
+.result-headline{font-size:16px;font-weight:800;color:var(--table-header);margin-bottom:6px}
+.result-note{font-size:12px;color:var(--text-muted);margin-bottom:18px}
+.result-table{width:100%;border-collapse:collapse;margin-bottom:18px}
+.result-table th{background:#F9FAFB;font-size:12.5px;color:var(--text-muted);padding:10px;border:1px solid var(--section-line)}
+.result-table td{padding:14px 10px;border:1px solid var(--section-line);font-size:14px;font-weight:700}
+.result-score{font-size:24px;color:var(--accent)}
+.result-pass{font-size:20px;color:#10B981}
+.result-fail{font-size:20px;color:#DC2626}
+
+.exam-note-item{padding:12px;border-radius:8px;border:1px solid var(--section-line);margin-bottom:8px;font-size:13px}
+.exam-note-item.wrong{background:var(--danger-bg)}
+.exam-note-item.right{background:var(--success-bg)}
+.exam-note-q{font-weight:700;margin-bottom:6px}
+.exam-note-ans{color:var(--text-muted);font-size:12.5px}
+
+@media(max-width:768px){
+  #topbar-inner{height:auto;min-height:52px;padding:8px 12px;flex-wrap:nowrap;gap:6px}
+  #topbar-inner h1{font-size:18px;flex:0 0 auto;min-width:0}
+  #back-link{font-size:18px;padding:6px 8px;flex:0 0 auto}
+  #page-tabs{flex:0 0 auto;gap:2px}
+  .ptab{padding:8px 9px;font-size:16px}
+  #auth-status{gap:4px}
+  #auth-status button{padding:6px 8px}
+  .label-text{display:none}
+  .form-grid3{grid-template-columns:1fr}
+  .form-grid4{grid-template-columns:1fr 1fr}
+  .cbt-body{flex-direction:column;height:auto !important}
+  .cbt-question-area{border-right:none;border-bottom:1px solid var(--section-line);overflow-y:visible;max-height:none}
+  .cbt-answer-sheet{width:100%}
+  .cbt-answer-grid{flex-direction:row;flex-wrap:wrap;max-height:none;overflow-y:visible}
+  .cbt-answer-cell{flex:0 0 calc(33.333% - 4px)}
+  .cbt-footer{flex-direction:column}
+  .cbt-footer-left{border-right:none;border-bottom:1px solid var(--section-line)}
+  .cbt-footer-right{width:100%}
+}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div id="topbar-inner">
+    <a id="back-link" href="index.html" title="교재로 돌아가기">← <span class="label-text">교재로 돌아가기</span></a>
+    <h1>🖥 <span class="label-text">CBT 모의고사</span></h1>
+    <nav id="page-tabs">
+      <button class="ptab" data-tab="take" onclick="switchPageTab('take')" title="시험 응시">📝 <span class="label-text">시험 응시</span></button>
+      <button class="ptab" data-tab="manage" onclick="switchPageTab('manage')" title="회차 관리">📚 <span class="label-text">회차 관리</span></button>
+      <button class="ptab" data-tab="history" onclick="switchPageTab('history')" title="응시 기록">📊 <span class="label-text">응시 기록</span></button>
+    </nav>
+    <div id="auth-status"></div>
+  </div>
+</header>
+
+<main id="page-content"></main>
+
+<script>
+// ─── STATE / STORAGE ───────────────────────────────────────────────────────
+const SETS_KEY = 'mge_cbt_sets';
+const ATTEMPTS_KEY = 'mge_cbt_attempts';
+let examSets = loadSets();
+let attempts = loadAttempts();
+let currentPageTab = 'take';
+
+function loadSets(){ try{ return JSON.parse(localStorage.getItem(SETS_KEY) || '[]'); }catch(e){ return []; } }
+function saveSets(){ localStorage.setItem(SETS_KEY, JSON.stringify(examSets)); }
+function loadAttempts(){ try{ return JSON.parse(localStorage.getItem(ATTEMPTS_KEY) || '[]'); }catch(e){ return []; } }
+function saveAttempts(){ localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts)); }
+function genId(){ return 'x_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+// ─── FIREBASE ──────────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCEJwszSu4cWLZwflkDShCK44M9jkhDpLk",
+  authDomain: "biomedicalengineerbook.firebaseapp.com",
+  projectId: "biomedicalengineerbook",
+  storageBucket: "biomedicalengineerbook.firebasestorage.app",
+  messagingSenderId: "272734528841",
+  appId: "1:272734528841:web:f78d71b51dbb1b4a4d6698",
+  measurementId: "G-2316CQ7T2W"
+};
+let db = null, auth = null, currentUser = null, unsubSets = null, unsubAttempts = null;
+let authMode = 'login';
+
+// ─── 게스트(비로그인 샘플 응시) 모드 ─────────────────────────────────────────────
+// review.html과 동일한 데모 계정 UID. 이 계정에 저장된 회차를 게스트가 읽기 전용으로 응시해볼 수 있습니다.
+const DEMO_UID = 'zkqbeqXkq3eNN3YQuPDDCdpwtst1';
+let guestMode = false;
+
+function bootFirebase(){
+  try{ firebase.initializeApp(FIREBASE_CONFIG); }
+  catch(e){
+    document.getElementById('page-content').innerHTML =
+      `<div class="card"><div class="card-title">Firebase 초기화 실패</div><div class="msg err">${escapeHtml(e.message)}</div></div>`;
+    return;
+  }
+  auth = firebase.auth();
+  db = firebase.firestore();
+  auth.onAuthStateChanged(user => {
+    if(user){ currentUser = user; startAppForUser(); }
+    else{
+      currentUser = null;
+      if(unsubSets){ unsubSets(); unsubSets = null; }
+      if(unsubAttempts){ unsubAttempts(); unsubAttempts = null; }
+      document.getElementById('auth-status').innerHTML = '';
+      renderAuthScreen();
+    }
+  });
+}
+
+function renderAuthScreen(errorMsg){
+  document.getElementById('page-content').innerHTML = `
+    <div class="card auth-wrap">
+      <div class="card-title">${authMode === 'login' ? '로그인' : '회원가입'}</div>
+      ${errorMsg ? `<div class="msg err">${escapeHtml(errorMsg)}</div>` : ''}
+      <div class="form-row"><label>이메일</label><input type="text" id="auth-email-input"></div>
+      <div class="form-row"><label>비밀번호 (6자 이상)</label><input type="password" id="auth-pw-input"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="submitAuth()">${authMode === 'login' ? '로그인' : '가입하기'}</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" onclick="toggleAuthMode()">${authMode === 'login' ? '계정이 없다면 회원가입' : '이미 계정이 있다면 로그인'}</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" onclick="enterGuestMode()">👀 게스트로 CBT 샘플 응시해보기 (읽기 전용)</button>
+      </div>
+    </div>
+  `;
+}
+
+function enterGuestMode(){
+  if(!DEMO_UID || DEMO_UID === 'PUT_YOUR_FIREBASE_UID_HERE'){
+    renderAuthScreen('게스트 보기가 아직 설정되지 않았습니다. 관리자에게 문의해주세요.');
+    return;
+  }
+  guestMode = true;
+  currentUser = null;
+  currentPageTab = (currentPageTab === 'manage' || currentPageTab === 'history') ? 'take' : currentPageTab;
+  document.getElementById('auth-status').innerHTML =
+    `<span class="label-text">👀 게스트(읽기 전용)</span><button class="btn btn-ghost btn-sm" onclick="exitGuestMode()" title="게스트 모드 종료">🚪<span class="label-text"> 로그인 화면으로</span></button>`;
+  const manageTabBtn = document.querySelector('.ptab[data-tab="manage"]');
+  const historyTabBtn = document.querySelector('.ptab[data-tab="history"]');
+  if(manageTabBtn) manageTabBtn.style.display = 'none';
+  if(historyTabBtn) historyTabBtn.style.display = 'none';
+  document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentPageTab));
+  document.getElementById('page-content').innerHTML = `<div class="card"><div class="empty-hint">샘플 회차를 불러오는 중...</div></div>`;
+  db.collection('users').doc(DEMO_UID).collection('cbtSets').get().then(snap => {
+    examSets = snap.docs.map(d => d.data());
+    renderTakeTab();
+  }).catch(e => {
+    document.getElementById('page-content').innerHTML =
+      `<div class="card"><div class="card-title">샘플 데이터를 불러오지 못했습니다</div><div class="msg err">${escapeHtml(e.message)}</div></div>`;
+  });
+}
+
+function exitGuestMode(){
+  guestMode = false;
+  examSets = loadSets();
+  attempts = loadAttempts();
+  document.getElementById('auth-status').innerHTML = '';
+  const manageTabBtn = document.querySelector('.ptab[data-tab="manage"]');
+  const historyTabBtn = document.querySelector('.ptab[data-tab="history"]');
+  if(manageTabBtn) manageTabBtn.style.display = '';
+  if(historyTabBtn) historyTabBtn.style.display = '';
+  renderAuthScreen();
+}
+
+function toggleAuthMode(){ authMode = authMode === 'login' ? 'signup' : 'login'; renderAuthScreen(); }
+function submitAuth(){
+  const email = document.getElementById('auth-email-input').value.trim();
+  const pw = document.getElementById('auth-pw-input').value;
+  if(!email || pw.length < 6){ renderAuthScreen('이메일과 6자 이상 비밀번호를 입력해주세요.'); return; }
+  const action = authMode === 'login'
+    ? auth.signInWithEmailAndPassword(email, pw)
+    : auth.createUserWithEmailAndPassword(email, pw);
+  action.catch(e => renderAuthScreen(firebaseErrorText(e)));
+}
+function firebaseErrorText(e){
+  const map = {
+    'auth/user-not-found': '가입되지 않은 이메일입니다.',
+    'auth/wrong-password': '비밀번호가 올바르지 않습니다.',
+    'auth/invalid-credential': '이메일 또는 비밀번호가 올바르지 않습니다.',
+    'auth/email-already-in-use': '이미 가입된 이메일입니다.',
+    'auth/invalid-email': '이메일 형식이 올바르지 않습니다.',
+    'auth/weak-password': '비밀번호가 너무 약합니다 (6자 이상).'
+  };
+  return map[e.code] || (e.message || '오류가 발생했습니다.');
+}
+function logout(){ if(auth) auth.signOut(); }
+
+function startAppForUser(){
+  document.getElementById('auth-status').innerHTML =
+    `<span class="label-text">${escapeHtml(currentUser.email || '')}</span><button class="btn btn-ghost btn-sm" onclick="logout()" title="로그아웃">🚪<span class="label-text"> 로그아웃</span></button>`;
+  document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentPageTab));
+  subscribeSets();
+  subscribeAttempts();
+}
+
+function setsCollection(){ return db.collection('users').doc(currentUser.uid).collection('cbtSets'); }
+function attemptsCollection(){ return db.collection('users').doc(currentUser.uid).collection('cbtAttempts'); }
+
+function subscribeSets(){
+  if(unsubSets) unsubSets();
+  unsubSets = setsCollection().onSnapshot(snap => {
+    examSets = snap.docs.map(d => d.data());
+    saveSets();
+    if(currentPageTab === 'manage') renderManageTab();
+    else if(currentPageTab === 'take') renderTakeTab();
+  }, err => console.error('cbtSets sync error', err));
+}
+function subscribeAttempts(){
+  if(unsubAttempts) unsubAttempts();
+  unsubAttempts = attemptsCollection().onSnapshot(snap => {
+    attempts = snap.docs.map(d => d.data());
+    saveAttempts();
+    if(currentPageTab === 'history') renderHistoryTab();
+  }, err => console.error('cbtAttempts sync error', err));
+}
+function persistSetUpsert(set){ if(!db || !currentUser) return; setsCollection().doc(set.id).set(set).catch(e => console.error('save failed', e)); }
+function persistSetRemove(id){ if(!db || !currentUser) return; setsCollection().doc(id).delete().catch(e => console.error('delete failed', e)); }
+function persistAttemptUpsert(a){ if(!db || !currentUser) return; attemptsCollection().doc(a.id).set(a).catch(e => console.error('save failed', e)); }
+
+// ─── PAGE TABS ─────────────────────────────────────────────────────────────
+function switchPageTab(tab){
+  if(!currentUser && !guestMode) return;
+  if(guestMode && (tab === 'manage' || tab === 'history')) return;
+  currentPageTab = tab;
+  document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if(tab === 'take') renderTakeTab();
+  else if(tab === 'manage') renderManageTab();
+  else if(tab === 'history') renderHistoryTab();
+}
+
+// ─── MANAGE TAB (회차 만들기) ────────────────────────────────────────────────
+let tmpQuestions = [];
+let editingSetId = null;
+
+function renderManageTab(){
+  const el = document.getElementById('page-content');
+  el.classList.remove('center-mode', 'wide');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">${editingSetId ? '회차 수정' : '새 회차 만들기'}</div>
+      <div class="card-sub">시험 회차 하나(예: "2024년 1회")를 단위로 문제를 등록합니다. 이름·제한시간·합격점수·과락기준을 입력하고, 문제를 표 또는 JSON으로 붙여넣은 뒤 저장하세요.</div>
+      <div class="form-grid4">
+        <div class="form-row"><label>회차 이름</label><input type="text" id="set-name" placeholder="예: 2024년 1회"></div>
+        <div class="form-row"><label>제한시간(분)</label><input type="number" id="set-time" placeholder="150" min="1"></div>
+        <div class="form-row"><label>합격 점수(평균)</label><input type="number" id="set-pass" placeholder="60" min="0" max="100"></div>
+        <div class="form-row"><label>과목별 과락 기준</label><input type="number" id="set-fail" placeholder="40" min="0" max="100"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 문제 표로 붙여넣기</div>
+      <div class="card-sub">엑셀/구글시트에 아래 순서로 열을 만들어 채운 뒤 범위를 복사해서 붙여넣으세요. 과목명은 과목별 과락 판정에 쓰입니다.</div>
+      <div class="sample-box">과목 | 문제 | 보기1 | 보기2 | 보기3 | 보기4 | 정답(1~4) | 해설(선택)</div>
+      <textarea id="q-import-text" class="import-textarea" placeholder="표를 여기에 붙여넣으세요"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="handleQuestionImport()">표에서 문제 추가</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('q-import-text').value=''">지우기</button>
+      </div>
+      <div id="q-import-msg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🧩 JSON으로 붙여넣기</div>
+      <div class="card-sub">아래 형식의 JSON 배열을 붙여넣으세요.</div>
+      <div class="sample-box">${escapeHtml(JSON.stringify([
+        { subject: '전기이론', text: '다음 중 옴의 법칙으로 옳은 것은?', choices: ['V=IR', 'V=I/R', 'V=I+R', 'V=I-R'], answer: 1, explanation: '옴의 법칙: V=IR' }
+      ], null, 2))}</div>
+      <textarea id="q-json-text" class="import-textarea" placeholder="JSON 배열을 여기에 붙여넣으세요"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="handleQuestionJsonImport()">JSON에서 문제 추가</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('q-json-text').value=''">지우기</button>
+      </div>
+      <div id="q-json-msg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">등록된 문제 (${tmpQuestions.length}개)</div>
+      <div id="tmp-q-list"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveExamSet()">${editingSetId ? '회차 수정 완료' : '회차 저장'}</button>
+        <button class="btn btn-ghost" onclick="cancelSetEdit()">취소</button>
+      </div>
+      <div id="set-save-msg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">저장된 회차 목록</div>
+      <div id="set-list"></div>
+    </div>
+  `;
+  renderTmpQuestionList();
+  renderSetList();
+}
+
+function addParsedQuestion(subject, text, c1, c2, c3, c4, correct, explanation){
+  const ans = parseInt(correct);
+  if(!text || [c1,c2,c3,c4].some(c => !c) || !(ans >= 1 && ans <= 4)) return false;
+  tmpQuestions.push({ subject: (subject||'').trim(), text, choices:[c1,c2,c3,c4], answer: ans, explanation: explanation || '' });
+  return true;
+}
+
+function handleQuestionImport(){
+  const raw = document.getElementById('q-import-text').value;
+  if(!raw.trim()){ showMsg('q-import-msg', '붙여넣은 내용이 없습니다.', false); return; }
+  const delim = raw.split('\n')[0].includes('\t') ? '\t' : ',';
+  const rows = parseDelimited(raw.trim(), delim);
+  let start = 0;
+  if(rows.length && /^(과목|subject|문제|question)$/i.test((rows[0][0]||'').trim())) start = 1;
+  let added = 0, skipped = 0;
+  for(let i = start; i < rows.length; i++){
+    const r = rows[i];
+    if(!r || !r.some(c => c && c.trim())) continue;
+    const cells = r.map(c => (c||'').trim());
+    const [subject, text, c1, c2, c3, c4, correct, explanation] = cells;
+    if(addParsedQuestion(subject, text, c1, c2, c3, c4, correct, explanation)) added++;
+    else skipped++;
+  }
+  if(added > 0){
+    showMsg('q-import-msg', `${added}개 문제를 추가했습니다.${skipped ? ` (${skipped}개는 형식이 맞지 않아 건너뜀)` : ''}`, true);
+    document.getElementById('q-import-text').value = '';
+    renderTmpQuestionList();
+  } else {
+    showMsg('q-import-msg', '유효한 행을 찾지 못했습니다. 열 순서를 확인해주세요.', false);
+  }
+}
+
+function handleQuestionJsonImport(){
+  const raw = document.getElementById('q-json-text').value.trim();
+  if(!raw){ showMsg('q-json-msg', '붙여넣은 내용이 없습니다.', false); return; }
+  let parsed;
+  try{ parsed = JSON.parse(raw); }catch(e){ showMsg('q-json-msg', 'JSON 형식이 올바르지 않습니다: ' + e.message, false); return; }
+  if(!Array.isArray(parsed)){ showMsg('q-json-msg', '최상위는 배열([...])이어야 합니다.', false); return; }
+  let added = 0, skipped = 0;
+  parsed.forEach(q => {
+    if(!q || typeof q !== 'object'){ skipped++; return; }
+    const choices = Array.isArray(q.choices) ? q.choices : [];
+    if(addParsedQuestion(q.subject, q.text, choices[0], choices[1], choices[2], choices[3], q.answer, q.explanation)) added++;
+    else skipped++;
+  });
+  if(added > 0){
+    showMsg('q-json-msg', `${added}개 문제를 추가했습니다.${skipped ? ` (${skipped}개는 형식이 맞지 않아 건너뜀)` : ''}`, true);
+    document.getElementById('q-json-text').value = '';
+    renderTmpQuestionList();
+  } else {
+    showMsg('q-json-msg', '유효한 문제를 찾지 못했습니다. 형식을 확인해주세요.', false);
+  }
+}
+
+function parseDelimited(text, delim){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){ if(text[i+1] === '"'){ field += '"'; i++; } else inQuotes = false; }
+      else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === delim){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if(c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  row.push(field); rows.push(row);
+  return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
+}
+
+function removeTmpQuestion(idx){ tmpQuestions.splice(idx, 1); renderTmpQuestionList(); }
+
+function renderTmpQuestionList(){
+  const el = document.getElementById('tmp-q-list');
+  if(!el) return;
+  if(!tmpQuestions.length){ el.innerHTML = `<div class="empty-hint">아직 추가된 문제가 없습니다.</div>`; return; }
+  el.innerHTML = tmpQuestions.map((q, i) => `
+    <div class="tmp-q-row">
+      <div class="tmp-q-num">${i+1}</div>
+      <div class="tmp-q-text">
+        ${q.subject ? `<span class="tag-chip" style="margin-right:6px">${escapeHtml(q.subject)}</span>` : ''}${escapeHtml(q.text)}
+        <div class="tmp-q-choices">${q.choices.map((c,ci) => (ci+1===q.answer ? `<b>${ci+1}.${escapeHtml(c)}</b>` : `${ci+1}.${escapeHtml(c)}`)).join('　')}</div>
+      </div>
+      <button class="icon-btn" onclick="removeTmpQuestion(${i})" title="삭제">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function saveExamSet(){
+  const name = document.getElementById('set-name').value.trim();
+  const timeLimitMinutes = parseInt(document.getElementById('set-time').value) || 0;
+  const passScore = document.getElementById('set-pass').value === '' ? 60 : parseInt(document.getElementById('set-pass').value);
+  const subjectFailScore = document.getElementById('set-fail').value === '' ? 40 : parseInt(document.getElementById('set-fail').value);
+  if(!name){ showMsg('set-save-msg', '회차 이름을 입력해주세요.', false); return; }
+  if(!tmpQuestions.length){ showMsg('set-save-msg', '문제를 1개 이상 추가해주세요.', false); return; }
+  if(!timeLimitMinutes){ showMsg('set-save-msg', '제한시간(분)을 입력해주세요.', false); return; }
+  const set = {
+    id: editingSetId || genId(),
+    name, timeLimitMinutes, passScore, subjectFailScore,
+    questions: tmpQuestions.slice(),
+    createdAt: Date.now()
+  };
+  const idx = examSets.findIndex(s => s.id === set.id);
+  if(idx > -1) examSets[idx] = set; else examSets.push(set);
+  saveSets();
+  persistSetUpsert(set);
+  showMsg('set-save-msg', '저장되었습니다.', true);
+  cancelSetEdit();
+  renderSetList();
+}
+
+function cancelSetEdit(){
+  editingSetId = null;
+  tmpQuestions = [];
+  renderManageTab();
+}
+
+function editExamSet(id){
+  const set = examSets.find(s => s.id === id);
+  if(!set) return;
+  editingSetId = id;
+  tmpQuestions = set.questions.slice();
+  renderManageTab();
+  document.getElementById('set-name').value = set.name;
+  document.getElementById('set-time').value = set.timeLimitMinutes;
+  document.getElementById('set-pass').value = set.passScore;
+  document.getElementById('set-fail').value = set.subjectFailScore != null ? set.subjectFailScore : 40;
+}
+
+function deleteExamSet(id){
+  if(!confirm('이 회차를 삭제할까요? 등록된 문제도 함께 삭제됩니다.')) return;
+  examSets = examSets.filter(s => s.id !== id);
+  saveSets();
+  persistSetRemove(id);
+  renderSetList();
+}
+
+function renderSetList(){
+  const el = document.getElementById('set-list');
+  if(!el) return;
+  if(!examSets.length){ el.innerHTML = `<div class="empty-hint">저장된 회차가 없습니다.</div>`; return; }
+  el.innerHTML = examSets.slice().sort((a,b) => b.createdAt - a.createdAt).map(s => `
+    <div class="set-row">
+      <div class="set-body">
+        <div class="set-name">${escapeHtml(s.name)}</div>
+        <div class="set-meta"><span>${s.questions.length}문제</span><span>${s.timeLimitMinutes}분</span><span>합격 ${s.passScore}점</span><span>과락 과목당 ${s.subjectFailScore != null ? s.subjectFailScore : 40}점 미만</span></div>
+      </div>
+      <div class="set-actions">
+        <button class="icon-btn" title="수정" onclick="editExamSet('${s.id}')">✏️</button>
+        <button class="icon-btn" title="삭제" onclick="deleteExamSet('${s.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── TAKE TAB (시험 응시 목록) ────────────────────────────────────────────────
+function guestBannerHtml(){
+  return guestMode ? `<div class="card" style="background:#FEF9E7;border-color:#FDE68A"><div style="font-size:13px;color:#92400E">👀 게스트 모드로 샘플 회차를 응시하고 있어요. 회차 관리·응시 기록은 볼 수 없고, 직접 로그인/가입하면 나만의 회차를 만들고 기록도 저장할 수 있습니다.</div></div>` : '';
+}
+
+function renderTakeTab(){
+  const el = document.getElementById('page-content');
+  el.classList.remove('center-mode', 'wide');
+  if(!examSets.length){
+    el.innerHTML = guestBannerHtml() + `<div class="card"><div class="empty-hint">${guestMode ? '아직 등록된 샘플 회차가 없습니다.' : '등록된 시험 회차가 없습니다. "📚 회차 관리" 탭에서 먼저 회차를 만들어주세요.'}</div></div>`;
+    return;
+  }
+  el.innerHTML = guestBannerHtml() + `
+    <div class="card">
+      <div class="card-title">시험 응시</div>
+      <div class="card-sub">응시할 회차를 선택하면 실제 CBT 시험과 비슷한 화면으로 시험을 볼 수 있습니다.</div>
+      <div id="take-set-list"></div>
+    </div>
+  `;
+  document.getElementById('take-set-list').innerHTML = examSets.slice().sort((a,b) => b.createdAt - a.createdAt).map(s => `
+    <div class="set-row">
+      <div class="set-body">
+        <div class="set-name">${escapeHtml(s.name)}</div>
+        <div class="set-meta"><span>${s.questions.length}문제</span><span>제한시간 ${s.timeLimitMinutes}분</span><span>합격 ${s.passScore}점</span></div>
+      </div>
+      <div class="set-actions">
+        <button class="btn btn-primary btn-sm" onclick="startExam('${s.id}')">시험 시작</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── EXAM SESSION ────────────────────────────────────────────────────────────
+let examState = null; // { set, order:[qIdx...], idx, answers:{}, remainingSec, timerId, fontScale }
+let lastAttempt = null; // 게스트 모드에서는 attempts 배열에 저장하지 않으므로 오답노트 조회용으로 별도 보관
+
+function startExam(setId){
+  const set = examSets.find(s => s.id === setId);
+  if(!set) return;
+  if(!confirm(`"${set.name}" 시험을 시작합니다.\n문제 ${set.questions.length}개 / 제한시간 ${set.timeLimitMinutes}분\n\n시작하시겠습니까?`)) return;
+  examState = {
+    set, idx: 0, answers: {}, remainingSec: set.timeLimitMinutes * 60,
+    fontScale: 100, timerId: null
+  };
+  examState.timerId = setInterval(examTick, 1000);
+  renderExamScreen();
+}
+
+function examTick(){
+  if(!examState) return;
+  examState.remainingSec--;
+  updateExamTimerDisplay();
+  if(examState.remainingSec <= 0){ submitExam(true); }
+}
+
+function fmtTime(sec){
+  sec = Math.max(0, sec);
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  return (h>0 ? h+'시간 ' : '') + String(m).padStart(2,'0')+'분 '+String(s).padStart(2,'0')+'초';
+}
+
+function updateExamTimerDisplay(){
+  const el = document.getElementById('cbt-timer-val');
+  if(!el || !examState) return;
+  el.textContent = fmtTime(examState.remainingSec);
+  el.parentElement.classList.toggle('warn', examState.remainingSec <= 300);
+}
+
+const CBT_BODY_HEIGHTS = { 100: 460, 150: 580 };
+
+function renderQuestionsHtml(set){
+  return set.questions.map((q, i) => `
+    <div class="cbt-q-block" id="cbt-q-block-${i}">
+      ${q.subject ? `<span class="tag-chip" style="margin-bottom:10px;display:inline-block">${escapeHtml(q.subject)}</span>` : ''}
+      <div class="cbt-q-text">${i+1}. ${escapeHtml(q.text)}</div>
+      <div class="cbt-choices">
+        ${q.choices.map((c,ci) => `
+          <div class="cbt-choice ${examState.answers[i]===ci+1?'picked':''}">
+            <span class="cbt-choice-num" onclick="pickExamChoice(${i},${ci+1})">${ci+1}</span><span>${escapeHtml(c)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderExamScreen(){
+  const el = document.getElementById('page-content');
+  el.classList.remove('center-mode');
+  el.classList.add('wide');
+  const { set, idx } = examState;
+  const answeredCount = Object.keys(examState.answers).length;
+  const bodyH = CBT_BODY_HEIGHTS[examState.fontScale] || 460;
+  el.innerHTML = `
+    <div class="cbt-frame">
+      <div class="cbt-exam-header">
+        <div class="cbt-exam-title"><span class="cbt-badge" id="cbt-badge-num">${idx+1}</span> ${escapeHtml(set.name)} CBT 문제풀이</div>
+        <div class="cbt-exam-info">
+          수험자명 : ${escapeHtml((currentUser && currentUser.email) || '')}<br>
+          <span class="cbt-timer"><span id="cbt-timer-val">${fmtTime(examState.remainingSec)}</span></span>
+        </div>
+      </div>
+      <div class="cbt-toolbar">
+        <div class="fsz-group">
+          <span>글자크기</span>
+          ${[100,150].map(v => `<button class="fsz-btn ${examState.fontScale===v?'active':''}" onclick="setFontScale(${v})">${v}%</button>`).join('')}
+        </div>
+        <div class="cbt-count-info">전체 문제 수 : ${set.questions.length}　안 푼 문제 수 : <b id="cbt-unanswered-count">${set.questions.length - answeredCount}</b></div>
+      </div>
+      <div class="cbt-body" style="height:${bodyH}px">
+        <div class="cbt-question-area" id="cbt-question-area" style="font-size:${examState.fontScale}%">
+          ${renderQuestionsHtml(set)}
+        </div>
+        <div class="cbt-answer-sheet">
+          <div class="cbt-answer-sheet-title">답안 표기란</div>
+          <div class="cbt-answer-grid" id="cbt-answer-grid"></div>
+        </div>
+      </div>
+      <div class="cbt-footer">
+        <div class="cbt-footer-left">
+          <button class="btn btn-secondary btn-sm" id="cbt-prev-btn" onclick="examMove(-1)" ${idx===0?'disabled':''}>◀ 이전</button>
+          <div class="cbt-footer-mid" id="cbt-footer-mid-text">${idx+1} / ${set.questions.length}</div>
+          <button class="btn btn-secondary btn-sm" id="cbt-next-btn" onclick="examMove(1)" ${idx===set.questions.length-1?'disabled':''}>다음 ▶</button>
+        </div>
+        <div class="cbt-footer-right">
+          <button class="btn btn-ghost btn-sm" onclick="toggleUnansweredPopup(event)">안 푼 문제</button>
+          <button class="btn btn-primary btn-sm" onclick="submitExam(false)">답안 제출</button>
+        </div>
+      </div>
+    </div>
+  `;
+  renderAnswerGrid();
+  attachScrollTracking();
+}
+
+function attachScrollTracking(){
+  const area = document.getElementById('cbt-question-area');
+  if(!area) return;
+  area.addEventListener('scroll', () => {
+    const areaRect = area.getBoundingClientRect();
+    const blocks = area.querySelectorAll('.cbt-q-block');
+    let current = 0;
+    blocks.forEach((b, i) => {
+      if(b.getBoundingClientRect().top - areaRect.top <= 40) current = i;
+    });
+    if(current !== examState.idx){
+      examState.idx = current;
+      updateCurrentBadge(current);
+    }
+  });
+}
+
+function scrollToQuestion(idx, behavior){
+  const block = document.getElementById('cbt-q-block-' + idx);
+  if(block) block.scrollIntoView({ behavior: behavior || 'smooth', block: 'start' });
+  examState.idx = idx;
+  updateCurrentBadge(idx);
+}
+
+function updateCurrentBadge(idx){
+  const badge = document.getElementById('cbt-badge-num');
+  if(badge) badge.textContent = idx + 1;
+  const mid = document.getElementById('cbt-footer-mid-text');
+  if(mid) mid.textContent = (idx + 1) + ' / ' + examState.set.questions.length;
+  document.querySelectorAll('.cbt-answer-cell').forEach(c => c.classList.remove('current'));
+  const cur = document.getElementById('cbt-answer-cell-' + idx);
+  if(cur) cur.classList.add('current');
+  const prevBtn = document.getElementById('cbt-prev-btn');
+  const nextBtn = document.getElementById('cbt-next-btn');
+  if(prevBtn) prevBtn.disabled = idx === 0;
+  if(nextBtn) nextBtn.disabled = idx === examState.set.questions.length - 1;
+}
+
+function setFontScale(v){
+  const idx = examState.idx;
+  examState.fontScale = v;
+  renderExamScreen();
+  requestAnimationFrame(() => scrollToQuestion(idx, 'auto'));
+}
+
+function pickExamChoice(qIdx, ci){
+  examState.answers[qIdx] = ci;
+  const block = document.getElementById('cbt-q-block-' + qIdx);
+  if(block){
+    block.querySelectorAll('.cbt-choice').forEach((elc, i) => elc.classList.toggle('picked', i + 1 === ci));
+  }
+  updateAnswerCell(qIdx);
+  const countEl = document.getElementById('cbt-unanswered-count');
+  if(countEl){
+    const answeredCount = Object.keys(examState.answers).length;
+    countEl.textContent = examState.set.questions.length - answeredCount;
+  }
+}
+
+function updateAnswerCell(qIdx){
+  const cell = document.getElementById('cbt-answer-cell-' + qIdx);
+  if(!cell) return;
+  cell.classList.toggle('answered', !!examState.answers[qIdx]);
+  cell.querySelectorAll('.cbt-answer-dot').forEach((d, i) => d.classList.toggle('marked', examState.answers[qIdx] === i + 1));
+}
+
+function examMove(delta){
+  const max = examState.set.questions.length - 1;
+  const target = Math.max(0, Math.min(max, examState.idx + delta));
+  scrollToQuestion(target);
+}
+
+function gotoExamQuestion(idx){
+  closeUnansweredPopup();
+  scrollToQuestion(idx);
+}
+
+function renderAnswerGrid(){
+  const grid = document.getElementById('cbt-answer-grid');
+  if(!grid) return;
+  grid.innerHTML = examState.set.questions.map((q, i) => `
+    <div class="cbt-answer-cell ${examState.answers[i] ? 'answered' : ''} ${i===examState.idx?'current':''}" id="cbt-answer-cell-${i}" onclick="gotoExamQuestion(${i})">
+      <span class="num">${i+1}</span>
+      <span class="cbt-answer-dots">
+        ${['①','②','③','④'].map((sym,ci) => `<span class="cbt-answer-dot ${examState.answers[i]===ci+1?'marked':''}">${sym}</span>`).join('')}
+      </span>
+    </div>
+  `).join('');
+}
+
+function toggleUnansweredPopup(e){
+  const existing = document.getElementById('cbt-unanswered-popup');
+  if(existing){ existing.remove(); return; }
+  const unanswered = examState.set.questions.map((q,i) => i).filter(i => !examState.answers[i]);
+  const popup = document.createElement('div');
+  popup.id = 'cbt-unanswered-popup';
+  popup.className = 'cbt-unanswered-popup';
+  const btn = e.target;
+  const rect = btn.getBoundingClientRect();
+  popup.style.left = (rect.left + window.scrollX - 180) + 'px';
+  popup.style.top = (rect.top + window.scrollY - 10) + 'px';
+  popup.innerHTML = `
+    <span class="cbt-close-x" onclick="closeUnansweredPopup()">✕</span>
+    <div class="hint">ⓘ 안 푼 문제 번호 보기: 번호 클릭 시 해당 문제로 이동합니다.</div>
+    <div class="cbt-unanswered-grid">
+      ${unanswered.length ? unanswered.map(i => `<div class="cbt-unanswered-num" onclick="gotoExamQuestion(${i})">${i+1}</div>`).join('') : '<div style="font-size:12.5px;color:var(--text-muted)">모든 문제를 풀었습니다.</div>'}
+    </div>
+  `;
+  document.body.appendChild(popup);
+}
+function closeUnansweredPopup(){ const p = document.getElementById('cbt-unanswered-popup'); if(p) p.remove(); }
+
+function computeSubjectScores(set, answers){
+  const bySubject = {};
+  set.questions.forEach((q, i) => {
+    const subj = q.subject || '(과목 없음)';
+    if(!bySubject[subj]) bySubject[subj] = { total: 0, correct: 0 };
+    bySubject[subj].total++;
+    if(answers[i] === q.answer) bySubject[subj].correct++;
+  });
+  return Object.keys(bySubject).map(subj => {
+    const { total, correct } = bySubject[subj];
+    return { subject: subj, total, correct, score: Math.round((correct/total)*100) };
+  });
+}
+
+function submitExam(auto){
+  if(!examState) return;
+  const total = examState.set.questions.length;
+  const answeredCount = Object.keys(examState.answers).length;
+  if(!auto && answeredCount < total){
+    if(!confirm(`아직 풀지 않은 문제가 ${total - answeredCount}개 있습니다.\n제출하시겠습니까?`)) return;
+  }
+  clearInterval(examState.timerId);
+  const set = examState.set;
+  let correctCount = 0;
+  set.questions.forEach((q, i) => { if(examState.answers[i] === q.answer) correctCount++; });
+  const score = Math.round((correctCount / total) * 100);
+  const subjectFailScore = set.subjectFailScore != null ? set.subjectFailScore : 40;
+  const subjectScores = computeSubjectScores(set, examState.answers);
+  const hasSubjectFail = subjectScores.some(s => s.score < subjectFailScore);
+  const passed = score >= set.passScore && !hasSubjectFail;
+  const attempt = {
+    id: genId(), setId: set.id, setName: set.name,
+    totalCount: total, correctCount, score, passed, hasSubjectFail,
+    subjectScores, subjectFailScore,
+    answers: examState.answers, takenAt: Date.now()
+  };
+  lastAttempt = attempt;
+  if(!guestMode){
+    attempts.push(attempt);
+    saveAttempts();
+    persistAttemptUpsert(attempt);
+  }
+  renderResultScreen(attempt, set);
+}
+
+// ─── RESULT SCREEN ───────────────────────────────────────────────────────────
+function renderResultScreen(attempt, set){
+  closeUnansweredPopup();
+  const el = document.getElementById('page-content');
+  el.classList.remove('wide');
+  el.classList.add('center-mode');
+  el.innerHTML = `
+    <div class="result-wrap">
+      <div class="card">
+        <div class="card-title">${escapeHtml(attempt.setName)} CBT 웹체험 채점결과</div>
+        <div class="result-card">
+          <div class="result-headline">${attempt.passed ? '축하합니다! 합격입니다.' : '다음 기회에 꼭 합격하시길 기원합니다.'}</div>
+          <div class="result-note">${attempt.hasSubjectFail ? `※ 평균 점수와 무관하게 과목별 과락(${attempt.subjectFailScore}점 미만) 기준에 걸려 불합격 처리되었습니다.` : '※ 실제 시험은 지역별, 종목별로 상이할 수 있습니다.'}</div>
+          <table class="result-table">
+            <tr><th>수험자</th><th>응시 회차</th><th>득점</th><th>합격여부</th></tr>
+            <tr>
+              <td>${escapeHtml((currentUser && currentUser.email) || '')}</td>
+              <td>${escapeHtml(attempt.setName)}</td>
+              <td class="result-score">${attempt.score}</td>
+              <td class="${attempt.passed ? 'result-pass' : 'result-fail'}">${attempt.passed ? '합격' : '불합격'}</td>
+            </tr>
+          </table>
+          ${attempt.subjectScores && attempt.subjectScores.length ? `
+          <table class="result-table">
+            <tr><th>과목</th><th>맞힌 개수</th><th>과목 점수</th></tr>
+            ${attempt.subjectScores.map(s => `
+              <tr>
+                <td>${escapeHtml(s.subject)}</td>
+                <td>${s.correct} / ${s.total}</td>
+                <td class="${s.score < attempt.subjectFailScore ? 'result-fail' : ''}">${s.score}점${s.score < attempt.subjectFailScore ? ' (과락)' : ''}</td>
+              </tr>
+            `).join('')}
+          </table>
+          ` : ''}
+          <div class="btn-row" style="justify-content:center">
+            <button class="btn btn-primary" onclick="renderTakeTab()">확인 완료</button>
+            <button class="btn btn-ghost" onclick="renderExamNote(${JSON.stringify(attempt.id)})">📝 오답 노트 보기</button>
+          </div>
+        </div>
+      </div>
+      <div id="exam-note-area"></div>
+    </div>
+  `;
+  examState = null;
+}
+
+function renderExamNote(attemptId){
+  const attempt = attempts.find(a => a.id === attemptId) || (lastAttempt && lastAttempt.id === attemptId ? lastAttempt : null);
+  const set = examSets.find(s => s.id === attempt.setId);
+  const area = document.getElementById('exam-note-area');
+  if(!attempt || !set || !area) return;
+  area.innerHTML = `<div class="card"><div class="card-title">오답 노트 (${attempt.correctCount}/${attempt.totalCount}개 정답)</div>${
+    set.questions.map((q, i) => {
+      const picked = attempt.answers[i];
+      const right = picked === q.answer;
+      return `<div class="exam-note-item ${right ? 'right' : 'wrong'}">
+        <div class="exam-note-q">${i+1}. ${escapeHtml(q.text)}</div>
+        <div class="exam-note-ans">${right ? '✅ 정답' : `❌ 내 답: ${picked ? picked+'번' : '(안 품)'} / 정답: ${q.answer}번`}</div>
+        ${q.explanation ? `<div class="explanation" style="margin-top:8px;padding:10px 12px;background:#F0F9FF;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12.5px;color:#0C4A6E">${escapeHtml(q.explanation)}</div>` : ''}
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+// ─── HISTORY TAB ─────────────────────────────────────────────────────────────
+function renderHistoryTab(){
+  const el = document.getElementById('page-content');
+  el.classList.remove('center-mode', 'wide');
+  if(!attempts.length){
+    el.innerHTML = `<div class="card"><div class="empty-hint">아직 응시 기록이 없습니다.</div></div>`;
+    return;
+  }
+  const rows = attempts.slice().sort((a,b) => b.takenAt - a.takenAt).map(a => `
+    <tr>
+      <td>${escapeHtml(a.setName)}</td>
+      <td>${new Date(a.takenAt).toLocaleString('ko-KR')}</td>
+      <td>${a.correctCount} / ${a.totalCount}</td>
+      <td>${a.score}점</td>
+      <td class="${a.passed ? 'hist-pass' : 'hist-fail'}">${a.passed ? '합격' : '불합격'}</td>
+    </tr>
+  `).join('');
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">응시 기록</div>
+      <table class="hist-table">
+        <thead><tr><th>회차</th><th>응시일시</th><th>맞힌 개수</th><th>점수</th><th>결과</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ─── KEYBOARD SHORTCUTS (시험 화면 전용) ─────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if(!examState) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if(['1','2','3','4'].includes(e.key)){ e.preventDefault(); pickExamChoice(examState.idx, parseInt(e.key)); }
+  else if(e.key === 'ArrowLeft'){ e.preventDefault(); examMove(-1); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); examMove(1); }
+});
+
+// ─── UTIL ────────────────────────────────────────────────────────────────────
+function showMsg(id, text, ok){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = `<div class="msg ${ok ? 'ok' : 'err'}">${escapeHtml(text)}</div>`;
+  setTimeout(() => { if(el) el.innerHTML = ''; }, 3500);
+}
+function escapeHtml(str){
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+document.querySelector('.ptab[data-tab="take"]').classList.add('active');
+bootFirebase();
+</script>
+</body>
+</html>
