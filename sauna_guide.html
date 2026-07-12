@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>사우나 완전 가이드</title>
+<style>
+@font-face {
+  font-family: 'NSK';
+  src: url('file:///home/claude/fonts/NotoSansKR.ttf') format('truetype');
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: 'NSR';
+  src: url('file:///home/claude/fonts/NotoSerifKR.ttf') format('truetype');
+  font-weight: 100 900;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --ink: #1c1c1c;
+  --ink2: #3a3a3a;
+  --ink3: #6a6560;
+  --bg: #f9f7f3;
+  --bg2: #f0ebe2;
+  --bg3: #e6dfd4;
+  --line: #d5cdc2;
+  --hot: #bf4a18;
+  --hot-bg: #fbeee7;
+  --hot-bd: #e8a882;
+  --cold: #1e6090;
+  --cold-bg: #e4f0f8;
+  --cold-bd: #80b8d8;
+  --wet: #3848a0;
+  --wet-bg: #eaebf8;
+  --wet-bd: #9098d0;
+  --rest: #2a6840;
+  --rest-bg: #e0f0e6;
+  --rest-bd: #80b898;
+  --amber: #a06010;
+  --amber-bg: #fdf0d8;
+  --amber-bd: #d8a860;
+}
+
+body {
+  font-family: 'NSK', sans-serif;
+  color: var(--ink);
+  background: #c0b8b0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.page {
+  width: 794px;
+  height: 1123px;
+  background: var(--bg);
+  margin: 16px auto;
+  padding: 44px 50px 36px;
+  overflow: hidden;
+  position: relative;
+}
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  body { background: white !important; }
+  .page {
+    width: 210mm !important; height: 297mm !important;
+    margin: 0 !important; padding: 15mm 17mm 13mm !important;
+    box-shadow: none !important;
+    page-break-after: always; page-break-inside: avoid;
+  }
+  .page:last-child { page-break-after: auto; }
+}
+
+/* ── 공통 ── */
+.pg-hd {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  border-bottom: 2px solid var(--ink); padding-bottom: 9px; margin-bottom: 16px;
+}
+.pg-hd-title { font-family: 'NSR', serif; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.2; }
+.pg-hd-sub { font-size: 11px; color: var(--ink3); margin-top: 3px; }
+.pg-hd-right { font-size: 9.5px; color: var(--ink3); text-align: right; line-height: 1.7; }
+
+.sec { margin-bottom: 14px; }
+.sec-hd {
+  font-size: 9px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--ink3); padding-bottom: 4px; margin-bottom: 9px;
+  border-bottom: 0.5px solid var(--line);
+}
+
+.pg-ft {
+  position: absolute; bottom: 18px; left: 50px; right: 50px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 9px; color: var(--ink3); border-top: 0.5px solid var(--line); padding-top: 6px;
+}
+
+/* ════ PAGE 1 ════ */
+
+/* 루틴 플로우 */
+.flow-wrap { display: flex; flex-direction: column; gap: 9px; }
+.flow-type-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.flow-type-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 2px;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.flow-steps { display: flex; align-items: stretch; gap: 0; }
+.flow-step {
+  flex: 1; border-radius: 5px; padding: 8px 10px; position: relative;
+}
+.fs-hot  { background: var(--hot-bg);  border: 1px solid var(--hot-bd); }
+.fs-cold { background: var(--cold-bg); border: 1px solid var(--cold-bd); margin: 0 3px; }
+.fs-rest { background: var(--rest-bg); border: 1px solid var(--rest-bd); }
+.fs-wet  { background: var(--wet-bg);  border: 1px solid var(--wet-bd); }
+.fs-num { font-size: 8.5px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 2px; }
+.fs-name { font-family: 'NSR', serif; font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
+.fs-body { font-size: 10px; color: var(--ink2); line-height: 1.5; }
+.fs-body b { font-weight: 700; color: var(--ink); }
+.flow-arr { display: flex; align-items: center; padding: 0 3px; color: var(--ink3); font-size: 16px; flex-shrink: 0; }
+.flow-note { font-size: 9.5px; color: var(--ink3); text-align: center; margin-top: 3px; font-style: italic; }
+
+/* 비교표 */
+.cmp-tbl { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.cmp-tbl th { padding: 5px 8px; background: var(--bg3); font-weight: 700; border: 0.5px solid var(--line); text-align: left; }
+.cmp-tbl td { padding: 4.5px 8px; border: 0.5px solid var(--line); color: var(--ink2); line-height: 1.45; }
+.cmp-tbl tr:nth-child(even) td { background: #f5f1ea; }
+.cmp-tbl td:first-child { background: var(--bg2) !important; font-weight: 600; color: var(--ink3); font-size: 10px; width: 76px; }
+
+/* 기전 인포그래픽 */
+.mech-row { display: flex; gap: 8px; }
+.mech-col {
+  flex: 1; background: white; border: 0.5px solid var(--line); border-radius: 6px;
+  overflow: hidden;
+}
+.mech-col-hd {
+  padding: 8px 10px 6px; display: flex; align-items: center; gap: 7px;
+  border-bottom: 0.5px solid var(--line);
+}
+.mech-col-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.mech-col-label { font-size: 8.5px; font-weight: 700; letter-spacing: 0.5px; }
+.mech-col-title { font-size: 12px; font-weight: 700; }
+.mech-col-body { padding: 6px 10px 8px; display: flex; flex-direction: column; gap: 5px; }
+.mech-item { display: flex; gap: 7px; align-items: flex-start; }
+.mech-ic {
+  width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 11px;
+  margin-top: 0;
+}
+.mech-tx-title { font-size: 11px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+.mech-tx-desc  { font-size: 10px; color: var(--ink3); line-height: 1.4; }
+
+/* ════ PAGE 2 ════ */
+
+/* 타임라인 그래프 */
+.tl-graph { display: flex; flex-direction: column; gap: 4px; }
+.tl-row { display: flex; align-items: stretch; gap: 0; }
+.tl-left { width: 52px; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-right: 8px; gap: 1px; }
+.tl-time { font-size: 10px; font-weight: 700; line-height: 1; }
+.tl-badge { font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 2px; }
+.tl-spine { width: 18px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+.tl-dot-outer { width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 8px; }
+.tl-dot-inner { width: 7px; height: 7px; border-radius: 50%; background: white; }
+.tl-spine-line { width: 2px; flex: 1; margin-top: 2px; }
+.tl-box { flex: 1; border-radius: 5px; padding: 7px 11px 7px; margin-bottom: 0; }
+.tl-box-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; color: var(--ink); }
+.tl-box-desc  { font-size: 10.5px; color: var(--ink2); line-height: 1.45; }
+.tl-box-tags  { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.tl-tag { font-size: 9px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+
+/* 반응 카드 그리드 */
+.rx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.rx-card {
+  background: white; border: 0.5px solid var(--line);
+  border-radius: 6px; padding: 9px 11px;
+  display: flex; gap: 9px; align-items: flex-start;
+}
+.rx-card.exp { border-left: 3px solid #c47050; }
+.rx-card.gen { border-left: 3px solid #60a878; }
+.rx-ic-wrap { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.rx-tag { font-size: 8px; font-weight: 700; letter-spacing: 0.3px; margin-bottom: 2px; }
+.rx-name { font-size: 11.5px; font-weight: 700; color: var(--ink); margin-bottom: 2px; line-height: 1.3; }
+.rx-desc { font-size: 10px; color: var(--ink3); line-height: 1.5; }
+
+/* ════ PAGE 3 ════ */
+
+/* 수분 인포그래픽 */
+.hydro-wrap { display: flex; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.hydro-step { flex: 1; padding: 10px 12px; }
+.hydro-step + .hydro-step { border-left: 0.5px solid var(--line); }
+.hydro-num { font-family: 'NSR', serif; font-size: 28px; font-weight: 600; line-height: 1; margin-bottom: 2px; }
+.hydro-unit { font-size: 9.5px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px; }
+.hydro-label { font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.hydro-desc { font-size: 10px; color: var(--ink3); line-height: 1.5; }
+.hydro-warn { background: #fdf0e0; border-left: 3px solid #d08840; }
+
+/* 사후 루틴 */
+.post-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.post-col { background: white; border: 0.5px solid var(--line); border-radius: 6px; overflow: hidden; }
+.post-col-hd { padding: 7px 11px; display: flex; align-items: center; gap: 6px; border-bottom: 0.5px solid var(--line); }
+.post-col-title { font-size: 12px; font-weight: 700; }
+.post-steps { padding: 6px 11px 8px; display: flex; flex-direction: column; gap: 0; }
+.post-item { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-bottom: 0.5px solid #f0ebe2; }
+.post-item:last-child { border-bottom: none; }
+.post-bullet { width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 8.5px; font-weight: 700; margin-top: 1px; }
+.post-item-title { font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 1px; }
+.post-item-desc  { font-size: 10px; color: var(--ink3); line-height: 1.45; }
+
+/* 타이밍 + 주의사항 */
+.btm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.timing-col { display: flex; flex-direction: column; gap: 5px; }
+.timing-item { display: flex; gap: 8px; align-items: center; background: white; border: 0.5px solid var(--line); border-radius: 5px; padding: 6px 10px; }
+.timing-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 2px; flex-shrink: 0; min-width: 68px; text-align: center; }
+.timing-text { font-size: 10.5px; color: var(--ink2); line-height: 1.4; }
+.timing-text b { color: var(--ink); }
+
+.warn-col { background: #fdf5ee; border: 1px solid #deb090; border-radius: 6px; padding: 10px 12px; }
+.warn-title { font-size: 11px; font-weight: 700; color: var(--hot); margin-bottom: 7px; display: flex; align-items: center; gap: 4px; }
+.warn-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+.warn-li { font-size: 10.5px; color: var(--ink2); display: flex; gap: 5px; align-items: baseline; }
+.warn-li::before { content: '—'; color: var(--hot); font-weight: 700; flex-shrink: 0; }
+.warn-note { margin-top: 8px; padding-top: 6px; border-top: 0.5px solid #deb090; font-size: 9.5px; color: var(--ink3); line-height: 1.6; }
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════
+     PAGE 1
+══════════════════════ -->
+<div class="page">
+  <div class="pg-hd">
+    <div>
+      <div class="pg-hd-title">사우나 완전 가이드</div>
+      <div class="pg-hd-sub">건식 · 습식 루틴 &nbsp;|&nbsp; 냉탕 · 내기욕 최적화 &nbsp;|&nbsp; 신체 반응과 건강 효과</div>
+    </div>
+    <div class="pg-hd-right">Sauna Complete Guide<br>2026 Edition</div>
+  </div>
+
+  <!-- 권장 루틴 -->
+  <div class="sec">
+    <div class="sec-hd">권장 루틴 — 1세트 구성 · 2–3회 반복</div>
+    <div class="flow-wrap">
+      <!-- 건식 -->
+      <div>
+        <div class="flow-type-row">
+          <span class="flow-type-badge" style="background:var(--hot-bg);color:var(--hot);border:0.5px solid var(--hot-bd);">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            건식 사우나 (Dry Sauna)
+          </span>
+          <span style="font-size:9.5px;color:var(--ink3);">총 소요 약 1시간 – 1시간 30분</span>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step fs-hot">
+            <div class="fs-num" style="color:var(--hot);">1단계</div>
+            <div class="fs-name">건식 사우나</div>
+            <div class="fs-body"><b>80–95°C · 8–12분</b><br>낮은 자리→높은 자리 순<br>10분 초과 시 득보다 실</div>
+          </div>
+          <div class="flow-arr">›</div>
+          <div class="flow-step fs-cold">
+            <div class="fs-num" style="color:var(--cold);">2단계</div>
+            <div class="fs-name">냉탕</div>
+            <div class="fs-body"><b>10–15°C · 1–3분</b><br>발→다리→몸통 순 입수<br>5분 이상은 과도한 수축</div>
+          </div>
+          <div class="flow-arr">›</div>
+          <div class="flow-step fs-rest">
+            <div class="fs-num" style="color:var(--rest);">3단계</div>
+            <div class="fs-name">내기욕 (외기욕)</div>
+            <div class="fs-body"><b>시원한 곳 · 10–15분</b><br>비치베드 누운 자세 최적<br>이완이 이 단계에서 완성</div>
+          </div>
+        </div>
+      </div>
+      <!-- 습식 -->
+      <div>
+        <div class="flow-type-row">
+          <span class="flow-type-badge" style="background:var(--wet-bg);color:var(--wet);border:0.5px solid var(--wet-bd);">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C6 10 4 14 4 16a8 8 0 0016 0c0-2-2-6-8-14z"/></svg>
+            습식 사우나 (Steam Sauna)
+          </span>
+          <span style="font-size:9.5px;color:var(--ink3);">체력 소모가 더 크므로 2세트 이상은 컨디션 확인 필수</span>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step fs-wet">
+            <div class="fs-num" style="color:var(--wet);">1단계</div>
+            <div class="fs-name">습식 사우나</div>
+            <div class="fs-body"><b>40–55°C · 10–15분</b><br>습도 90–100% — 체감온도 높음<br>건식 대비 체온 1–2분 빠르게 상승</div>
+          </div>
+          <div class="flow-arr">›</div>
+          <div class="flow-step fs-cold">
+            <div class="fs-num" style="color:var(--cold);">2단계</div>
+            <div class="fs-name">냉탕 또는 냉샤워</div>
+            <div class="fs-body"><b>10–15°C · 1–2분</b><br>습열로 체온이 더 많이 올라있어<br>건식보다 짧게 유지</div>
+          </div>
+          <div class="flow-arr">›</div>
+          <div class="flow-step fs-rest">
+            <div class="fs-num" style="color:var(--rest);">3단계</div>
+            <div class="fs-name">내기욕 (외기욕)</div>
+            <div class="fs-body"><b>시원한 곳 · 10–15분</b><br>수분 닦지 말고 자연 건조<br>증기가 피부에 남아 보습 효과</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 건식 vs 습식 비교 -->
+  <div class="sec">
+    <div class="sec-hd">건식 vs 습식 — 한눈에 비교</div>
+    <table class="cmp-tbl">
+      <thead>
+        <tr>
+          <th style="width:76px;"></th>
+          <th style="color:var(--hot);">🔥 건식 사우나</th>
+          <th style="color:var(--wet);">💧 습식 사우나</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>온도 / 습도</td><td>80–95°C &nbsp;/&nbsp; 습도 10–20%</td><td>40–55°C &nbsp;/&nbsp; 습도 90–100%</td></tr>
+        <tr><td>체감 열기</td><td>강렬하고 건조한 직접열</td><td>습열 — 숨막히는 듯 묵직하고 포근</td></tr>
+        <tr><td>호흡기</td><td>건조 — 코·기도 자극 가능</td><td>촉촉한 증기, 기관지·점막 보호</td></tr>
+        <tr><td>피부</td><td>땀 증발 빠름, 건조해질 수 있음</td><td>증기로 수분 유지, 모공 열림 탁월</td></tr>
+        <tr><td>추천 대상</td><td>혈관 훈련, 강한 자극, 숙련자</td><td>호흡기 민감, 피부 관리, 초보자</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 단계별 신체 기전 -->
+  <div class="sec" style="margin-bottom:0;">
+    <div class="sec-hd">단계별 신체 기전 — 왜 좋은가</div>
+    <div class="mech-row">
+      <!-- 열 -->
+      <div class="mech-col">
+        <div class="mech-col-hd" style="background:var(--hot-bg);">
+          <div class="mech-col-icon" style="background:white;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--hot)" stroke-width="2.2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/></svg>
+          </div>
+          <div>
+            <div class="mech-col-label" style="color:var(--hot);">고온 자극 / 사우나</div>
+            <div class="mech-col-title">열 효과</div>
+          </div>
+        </div>
+        <div class="mech-col-body">
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--hot-bg);color:var(--hot);">♥</div>
+            <div><div class="mech-tx-title">심폐 기능 향상</div><div class="mech-tx-desc">심박·심박출량 증가로 유산소 운동과 유사한 심혈관 자극</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--hot-bg);color:var(--hot);">⚗</div>
+            <div><div class="mech-tx-title">HSP(열충격단백질) 생성</div><div class="mech-tx-desc">세포 수리 단백질 분비, 근육 회복·근육통 완화</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--hot-bg);color:var(--hot);">☺</div>
+            <div><div class="mech-tx-title">엔도르핀·도파민 분비</div><div class="mech-tx-desc">고온 스트레스 보상 반응, 기분 개선·통증 완화</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--hot-bg);color:var(--hot);">✦</div>
+            <div><div class="mech-tx-title">피부 정화</div><div class="mech-tx-desc">발한으로 모공 확장, 노폐물·피지 배출</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 냉 -->
+      <div class="mech-col">
+        <div class="mech-col-hd" style="background:var(--cold-bg);">
+          <div class="mech-col-icon" style="background:white;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--cold)" stroke-width="2.2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+          </div>
+          <div>
+            <div class="mech-col-label" style="color:var(--cold);">저온 자극 / 냉탕</div>
+            <div class="mech-col-title">냉 효과</div>
+          </div>
+        </div>
+        <div class="mech-col-body">
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--cold-bg);color:var(--cold);">⚡</div>
+            <div><div class="mech-tx-title">노르에피네프린 급증</div><div class="mech-tx-desc">혈중 농도 200–300% 증가, 집중력·각성·기분 상승</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--cold-bg);color:var(--cold);">⟳</div>
+            <div><div class="mech-tx-title">혈관 훈련</div><div class="mech-tx-desc">수축·이완 반복으로 혈관 탄력 강화</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--cold-bg);color:var(--cold);">◈</div>
+            <div><div class="mech-tx-title">갈색지방 활성화</div><div class="mech-tx-desc">열 생성 지방 조직 자극, 대사율 상승 기여</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--cold-bg);color:var(--cold);">✦</div>
+            <div><div class="mech-tx-title">염증·부종 감소</div><div class="mech-tx-desc">혈류 억제로 근육 미세 손상 부위 통증·부종 완화</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 이완 -->
+      <div class="mech-col">
+        <div class="mech-col-hd" style="background:var(--rest-bg);">
+          <div class="mech-col-icon" style="background:white;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--rest)" stroke-width="2.2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div>
+            <div class="mech-col-label" style="color:var(--rest);">이완 완성 / 내기욕</div>
+            <div class="mech-col-title">이완 효과</div>
+          </div>
+        </div>
+        <div class="mech-col-body">
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--rest-bg);color:var(--rest);">🫁</div>
+            <div><div class="mech-tx-title">부교감신경 우세</div><div class="mech-tx-desc">교감→부교감 전환 완성, 심박·혈압 정상화</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--rest-bg);color:var(--rest);">◑</div>
+            <div><div class="mech-tx-title">수면 호르몬 준비</div><div class="mech-tx-desc">체온 하강 시 멜라토닌 분비 유도, 야간 숙면 효과</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--rest-bg);color:var(--rest);">↓</div>
+            <div><div class="mech-tx-title">코르티솔 정상화</div><div class="mech-tx-desc">스트레스 호르몬 수치 감소, 정신적 피로 해소</div></div>
+          </div>
+          <div class="mech-item">
+            <div class="mech-ic" style="background:var(--rest-bg);color:var(--rest);">≋</div>
+            <div><div class="mech-tx-title">근육 이완 완성</div><div class="mech-tx-desc">혈류 재분배 안정화, 전신 근육 긴장 완전 해소</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <span>사우나 완전 가이드 · 2026</span>
+    <span>1 / 3</span>
+  </div>
+</div>
+
+
+<!-- ══════════════════════
+     PAGE 2
+══════════════════════ -->
+<div class="page">
+  <div class="pg-hd" style="margin-bottom:13px;">
+    <div class="pg-hd-title" style="font-size:16px;">신체 반응 — 입실부터 내기욕까지</div>
+    <div class="pg-hd-right" style="font-size:9px;">사우나 완전 가이드 · 2026</div>
+  </div>
+
+  <!-- 타임라인 -->
+  <div class="sec" style="margin-bottom:13px;">
+    <div class="sec-hd">입실 후 시간대별 체내 변화 — 건식 90°C 기준</div>
+    <div class="tl-graph">
+
+      <div class="tl-row">
+        <div class="tl-left">
+          <div class="tl-time" style="color:#d07040;">0–2분</div>
+        </div>
+        <div class="tl-spine">
+          <div class="tl-dot-outer" style="background:#d87848;"><div class="tl-dot-inner"></div></div>
+          <div class="tl-spine-line" style="background:#e8b090;"></div>
+        </div>
+        <div class="tl-box" style="background:#fdf4ee;border:1px solid #ecc8a8;">
+          <div class="tl-box-title">열 감지 · 혈관 확장 시작</div>
+          <div class="tl-box-desc">피부 온도 상승, 말초혈관 확장 시작. 심박수 서서히 증가.</div>
+          <div class="tl-box-tags">
+            <span class="tl-tag" style="background:#fae8d8;color:#a05020;">혈관 확장</span>
+            <span class="tl-tag" style="background:#fae8d8;color:#a05020;">심박 상승</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-left">
+          <div class="tl-time" style="color:#c05e28;">2–4분</div>
+        </div>
+        <div class="tl-spine">
+          <div class="tl-dot-outer" style="background:#c86030;"><div class="tl-dot-inner"></div></div>
+          <div class="tl-spine-line" style="background:#e0a070;"></div>
+        </div>
+        <div class="tl-box" style="background:#fceee4;border:1px solid #e8b890;">
+          <div class="tl-box-title">발한 시작 · 체온 0.5–1°C 상승</div>
+          <div class="tl-box-desc">땀 분비 시작, 혈류량 증가. 근육 서서히 이완 시작. 혈압 소폭 상승.</div>
+          <div class="tl-box-tags">
+            <span class="tl-tag" style="background:#f8e0d0;color:#a04818;">발한 시작</span>
+            <span class="tl-tag" style="background:#f8e0d0;color:#a04818;">근육 이완</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-left">
+          <div class="tl-time" style="color:#b04820;">5–7분</div>
+        </div>
+        <div class="tl-spine">
+          <div class="tl-dot-outer" style="background:#b84820;"><div class="tl-dot-inner"></div></div>
+          <div class="tl-spine-line" style="background:#d09060;"></div>
+        </div>
+        <div class="tl-box" style="background:#f8e8dc;border:1px solid #e0a878;">
+          <div class="tl-box-title">심박 100회↑ · 엔도르핀 분비 시작</div>
+          <div class="tl-box-desc">심박수 100회 이상, 혈압 일시 상승 후 하강. 기분 향상 호르몬 분비 시작. 근육 이완 본격화.</div>
+          <div class="tl-box-tags">
+            <span class="tl-tag" style="background:#f0d8c8;color:#904018;">심박 100↑</span>
+            <span class="tl-tag" style="background:#f0d8c8;color:#904018;">엔도르핀</span>
+            <span class="tl-tag" style="background:#f0d8c8;color:#904018;">혈압 하강</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-left">
+          <div class="tl-time" style="color:#983810;">8–10분</div>
+          <div class="tl-badge" style="background:#e8f0dc;color:#486020;">최적</div>
+        </div>
+        <div class="tl-spine">
+          <div class="tl-dot-outer" style="background:#a03810;"><div class="tl-dot-inner"></div></div>
+          <div class="tl-spine-line" style="background:#c88050;"></div>
+        </div>
+        <div class="tl-box" style="background:#f4e0d0;border:1px solid #d89868;border-left:3px solid #a03810;">
+          <div class="tl-box-title">HSP 분비 본격화 · 효과 최적 구간</div>
+          <div class="tl-box-desc">열충격단백질(HSP) 본격 분비. 체온 38–39°C. 효과 대비 리스크가 가장 균형 잡힌 구간. 퇴실 최적 시점.</div>
+          <div class="tl-box-tags">
+            <span class="tl-tag" style="background:#ead0b8;color:#883010;">HSP 분비</span>
+            <span class="tl-tag" style="background:#ead0b8;color:#883010;">체온 38–39°C</span>
+            <span class="tl-tag" style="background:#e8f0dc;color:#486020;">👍 최적 퇴실 구간</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-left">
+          <div class="tl-time" style="color:#b02020;">10분↑</div>
+          <div class="tl-badge" style="background:#fde8e8;color:#b02020;">위험</div>
+        </div>
+        <div class="tl-spine">
+          <div class="tl-dot-outer" style="background:#b02020;"><div class="tl-dot-inner"></div></div>
+        </div>
+        <div class="tl-box" style="background:#fde8e8;border:1px solid #e09090;border-left:3px solid #b02020;">
+          <div class="tl-box-title" style="color:#b02020;">⚠ 탈수·과부하 리스크 증가 — 즉시 퇴실</div>
+          <div class="tl-box-desc">전해질 손실 가속, 심박 과부하 위험. 어지러움·두통·갑작스러운 발한 중지 시 즉시 퇴실. 습식은 1–2분 앞당겨 적용.</div>
+          <div class="tl-box-tags">
+            <span class="tl-tag" style="background:#f8d8d8;color:#901818;">탈수 가속</span>
+            <span class="tl-tag" style="background:#f8d8d8;color:#901818;">심박 과부하</span>
+            <span class="tl-tag" style="background:#f8d8d8;color:#901818;">전해질 손실</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 내기욕 반응 -->
+  <div class="sec" style="margin-bottom:0;">
+    <div class="sec-hd">내기욕(외기욕) 중 나타나는 신체 반응</div>
+    <div class="rx-grid">
+
+      <div class="rx-card exp">
+        <div class="rx-ic-wrap" style="background:#fbeee7;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c47050" stroke-width="2"><path d="M12 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M21 8H3l1 13h16z"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#c47050;">직접 경험한 반응</div>
+          <div class="rx-name">귀 찌르르 — 이관 개방</div>
+          <div class="rx-desc">냉온 교차로 중이 기압 변화 후, 이완기에 이관(유스타키오관)이 재조정되며 생기는 감각. 하품 시 귀 뻥 뚫리는 원리와 동일.</div>
+        </div>
+      </div>
+
+      <div class="rx-card exp">
+        <div class="rx-ic-wrap" style="background:#fbeee7;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c47050" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#c47050;">직접 경험한 반응</div>
+          <div class="rx-name">꼬리뼈 간질간질</div>
+          <div class="rx-desc">냉탕에서 수축됐던 말초혈관 확장 시 혈류 귀환으로, 미골신경총(꼬리뼈 주변 신경 집합)이 예민하게 반응하는 현상.</div>
+        </div>
+      </div>
+
+      <div class="rx-card exp">
+        <div class="rx-ic-wrap" style="background:#fbeee7;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c47050" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#c47050;">직접 경험한 반응</div>
+          <div class="rx-name">기분 좋은 소름</div>
+          <div class="rx-desc">교감→부교감 전환 과정에서 자율신경이 잠시 동시 활성화되며 나타나는 피부 반응. 두려움·추위의 소름과는 기전이 다름.</div>
+        </div>
+      </div>
+
+      <div class="rx-card exp">
+        <div class="rx-ic-wrap" style="background:#fbeee7;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c47050" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#c47050;">직접 경험한 반응</div>
+          <div class="rx-name">몸이 나도 모르게 튀기</div>
+          <div class="rx-desc">뇌가 수면 진입 신호를 보내며 근육이 순간 수축하는 <b style="color:var(--ink);">수면 입면 경련(Hypnic Jerk)</b>. 깊이 이완됐다는 증거.</div>
+        </div>
+      </div>
+
+      <div class="rx-card gen">
+        <div class="rx-ic-wrap" style="background:var(--rest-bg);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2a6840" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#2a6840;">일반적으로 나타나는 반응</div>
+          <div class="rx-name">포근함 · 졸음</div>
+          <div class="rx-desc">엔도르핀·엔도카나비노이드 분비와 부교감신경 우세가 겹쳐 나타나는 전형적인 이완 상태.</div>
+        </div>
+      </div>
+
+      <div class="rx-card gen">
+        <div class="rx-ic-wrap" style="background:var(--rest-bg);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2a6840" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#2a6840;">일반적으로 나타나는 반응</div>
+          <div class="rx-name">심박이 느리게 느껴짐</div>
+          <div class="rx-desc">사우나로 빨라졌던 심박이 내기욕 중 서서히 안정화. 조용한 환경에서 더 뚜렷하게 인지됨.</div>
+        </div>
+      </div>
+
+      <div class="rx-card gen">
+        <div class="rx-ic-wrap" style="background:var(--rest-bg);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2a6840" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#2a6840;">일반적으로 나타나는 반응</div>
+          <div class="rx-name">피부 홍조 · 달아오름</div>
+          <div class="rx-desc">혈관 확장으로 피부 표면 혈류 증가. 내기욕 5–10분 내 서서히 정상화.</div>
+        </div>
+      </div>
+
+      <div class="rx-card gen">
+        <div class="rx-ic-wrap" style="background:var(--rest-bg);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2a6840" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+        </div>
+        <div>
+          <div class="rx-tag" style="color:#2a6840;">일반적으로 나타나는 반응</div>
+          <div class="rx-name">근육 묵직함 · 무게감</div>
+          <div class="rx-desc">혈류가 내장에서 근육으로 재분배되며 생기는 감각. 통증이 아닌 깊은 이완의 신호.</div>
+        </div>
+      </div>
+
+    </div>
+    <div style="font-size:9px;color:var(--ink3);margin-top:6px;display:flex;gap:14px;">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#c47050;margin-right:4px;vertical-align:middle;"></span>직접 경험한 반응 — 본인이 실제로 경험</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#60a878;margin-right:4px;vertical-align:middle;"></span>일반적 반응 — 대부분의 사람에게 공통</span>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <span>사우나 완전 가이드 · 2026</span>
+    <span>2 / 3</span>
+  </div>
+</div>
+
+
+<!-- ══════════════════════
+     PAGE 3
+══════════════════════ -->
+<div class="page">
+  <div class="pg-hd" style="margin-bottom:13px;">
+    <div class="pg-hd-title" style="font-size:16px;">실전 가이드 — 수분·사후 관리·타이밍</div>
+    <div class="pg-hd-right" style="font-size:9px;">사우나 완전 가이드 · 2026</div>
+  </div>
+
+  <!-- 수분 보충 -->
+  <div class="sec" style="margin-bottom:13px;">
+    <div class="sec-hd">수분 보충 — 가장 중요한 습관</div>
+    <div class="hydro-wrap">
+      <div class="hydro-step" style="background:#edf8e4;">
+        <div class="hydro-num" style="color:#2a6020;">1–2</div>
+        <div class="hydro-unit" style="color:#3a7028;">컵 / 사우나 전</div>
+        <div class="hydro-label">입실 30분 전 미리 보충</div>
+        <div class="hydro-desc">소변이 진한 노란색이면 이미 탈수 상태. 수분 보충 후 입실.</div>
+      </div>
+      <div class="hydro-step" style="background:#e2f0f8;">
+        <div class="hydro-num" style="color:#1a5880;">소량</div>
+        <div class="hydro-unit" style="color:#1a5880;">세트 사이마다</div>
+        <div class="hydro-label">내기욕 중 조금씩 보충</div>
+        <div class="hydro-desc">물 또는 이온음료. 한 번에 많이 마시지 않기. 위장 부담 주의.</div>
+      </div>
+      <div class="hydro-step" style="background:#f4f0e4;">
+        <div class="hydro-num" style="color:#604010;">충분히</div>
+        <div class="hydro-unit" style="color:#604010;">사우나 종료 후</div>
+        <div class="hydro-label">소변 색이 연해질 때까지</div>
+        <div class="hydro-desc">체중 1kg 감소 = 수분 약 1L 손실. 색이 연해질 때까지 보충.</div>
+      </div>
+      <div class="hydro-step hydro-warn">
+        <div class="hydro-num" style="color:#904010;">✕</div>
+        <div class="hydro-unit" style="color:#904010;">알코올 절대 금지</div>
+        <div class="hydro-label" style="color:#804010;">음주 후 사우나 금물</div>
+        <div class="hydro-desc">알코올은 강력한 이뇨제. 탈수·심박 이상 위험 대폭 증가.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 사우나 후 루틴 -->
+  <div class="sec" style="margin-bottom:13px;">
+    <div class="sec-hd">사우나 후 피부 · 근육 루틴</div>
+    <div class="post-grid">
+      <div class="post-col">
+        <div class="post-col-hd" style="background:var(--hot-bg);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hot)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <div class="post-col-title" style="color:var(--hot);">피부 관리</div>
+        </div>
+        <div class="post-steps">
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--hot-bg);color:var(--hot);">1</div>
+            <div><div class="post-item-title">냉탕이 모공을 닫아줌</div><div class="post-item-desc">냉탕·냉샤워로 열린 모공 수축. 마지막은 반드시 냉수 마무리로 탄력 개선.</div></div>
+          </div>
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--hot-bg);color:var(--hot);">2</div>
+            <div><div class="post-item-title">보습은 완전히 식은 뒤</div><div class="post-item-desc">열이 남아있을 때 보습제 바르면 흡수 극대화. 내기욕 직후가 최적.</div></div>
+          </div>
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--hot-bg);color:var(--hot);">3</div>
+            <div><div class="post-item-title">각질 제거 최적 타이밍</div><div class="post-item-desc">각질이 불어있는 직후 스크럽·때밀이 효과 2–3배. 부드럽게 진행.</div></div>
+          </div>
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--hot-bg);color:var(--hot);">4</div>
+            <div><div class="post-item-title">눈·입술 별도 집중 보습</div><div class="post-item-desc">얇은 피부 부위는 건식 후 특히 건조. 별도 보습제 적용 권장.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="post-col">
+        <div class="post-col-hd" style="background:var(--rest-bg);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rest)" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          <div class="post-col-title" style="color:var(--rest);">근육 · 스트레칭</div>
+        </div>
+        <div class="post-steps">
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--rest-bg);color:var(--rest);">1</div>
+            <div><div class="post-item-title">스트레칭은 내기욕 중</div><div class="post-item-desc">근육이 가장 유연한 상태. 가벼운 정적 스트레칭 10–15분이 평소의 2배 효과.</div></div>
+          </div>
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--rest-bg);color:var(--rest);">2</div>
+            <div><div class="post-item-title">단백질 섭취 타이밍</div><div class="post-item-desc">사우나 후 30분–1시간 내 단백질 섭취 시 HSP 활성화와 맞물려 회복 시너지.</div></div>
+          </div>
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--rest-bg);color:var(--rest);">3</div>
+            <div><div class="post-item-title">운동 전 사우나는 비추</div><div class="post-item-desc">근육 피로도 상승으로 퍼포먼스 저하. 사우나는 반드시 운동 후에 배치.</div></div>
+          </div>
+          <div class="post-item">
+            <div class="post-bullet" style="background:var(--rest-bg);color:var(--rest);">4</div>
+            <div><div class="post-item-title">강한 스트레칭은 금물</div><div class="post-item-desc">혈관 확장 상태에서 무리한 스트레칭은 근육 미세 손상 위험. 천천히 가볍게.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 타이밍 + 주의사항 -->
+  <div class="btm-grid">
+    <div>
+      <div class="sec-hd">최적 타이밍</div>
+      <div class="timing-col">
+        <div class="timing-item">
+          <div class="timing-badge" style="background:var(--rest-bg);color:var(--rest);border:0.5px solid var(--rest-bd);">운동 후</div>
+          <div class="timing-text"><b>근육 회복·젖산 제거</b> 극대화. 운동 후 1–2시간 이내 효과적.</div>
+        </div>
+        <div class="timing-item">
+          <div class="timing-badge" style="background:var(--cold-bg);color:var(--cold);border:0.5px solid var(--cold-bd);">저녁</div>
+          <div class="timing-text">내기욕 후 <b>체온 하강</b>이 멜라토닌 분비 유도 → 숙면에 도움.</div>
+        </div>
+        <div class="timing-item">
+          <div class="timing-badge" style="background:var(--bg2);color:var(--ink3);border:0.5px solid var(--line);">식후 1시간↑</div>
+          <div class="timing-text">소화 방해·어지러움 방지. <b>공복·식후 바로는 피하기.</b></div>
+        </div>
+        <div class="timing-item" style="background:#fdf5ee;">
+          <div class="timing-badge" style="background:var(--hot-bg);color:var(--hot);border:0.5px solid var(--hot-bd);">비추 ✕</div>
+          <div class="timing-text"><b>운동 전·극도 피로·컨디션 불량</b> 상태에서는 피할 것.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-hd">피해야 할 상황</div>
+      <div class="warn-col">
+        <div class="warn-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--hot)" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          다음 상황에서는 입실하지 말 것
+        </div>
+        <div class="warn-list">
+          <div class="warn-li">음주 후 / 숙취 상태</div>
+          <div class="warn-li">극도의 피로·컨디션 불량</div>
+          <div class="warn-li">공복 또는 식후 바로</div>
+          <div class="warn-li">심한 두통·어지러움</div>
+          <div class="warn-li">고혈압·심장 질환</div>
+          <div class="warn-li">피부 상처·염증·발진</div>
+          <div class="warn-li">임신 중</div>
+          <div class="warn-li">발열·감염 상태</div>
+        </div>
+        <div class="warn-note">고혈압·심장 질환이 있다면 반드시 의사 상담 후 진행.<br>냉탕 입수 시 갑작스러운 심박 변화에 주의. 이 문서는 일반 건강 정보이며 의학적 처방을 대체하지 않습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-ft">
+    <span>사우나 완전 가이드 · 2026</span>
+    <span>3 / 3</span>
+  </div>
+</div>
+
+</body>
+</html>
