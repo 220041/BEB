@@ -125,6 +125,7 @@ button{font-family:inherit}
 .review-setup.review-scope{gap:20px}
 .radio-row{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;cursor:pointer}
 .review-progress{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:14px}
+.session-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
 #session-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 .fc-card-outer{width:100%;max-width:560px;perspective:1000px}
 .fc-card{width:100%;min-height:200px;display:grid;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
@@ -960,7 +961,6 @@ function renderReviewTab() {
   const pool = getReviewPool();
   const maxN = Math.min(pool.length, 40);
   if (reviewCount > maxN) reviewCount = maxN;
-  const filterMatchCount = getReviewFilterMatches().length;
   const countOptions = [5, 10, 15, 20, 30, maxN]
     .filter((v, i, a) => v <= maxN && v > 0 && a.indexOf(v) === i)
     .sort((a, b) => a - b)
@@ -998,46 +998,8 @@ function renderReviewTab() {
         <button class="btn btn-primary" onclick="startReview()">복습 시작</button>
       </div>
       ` : `<div class="empty-hint">선택한 조건에 맞는 항목이 없습니다.</div>`}
-      ${guestMode ? '' : `
-      <div class="review-setup" style="border-top:1px solid #E5E7EB;padding-top:12px;margin-top:4px;justify-content:space-between">
-        <span style="font-size:12.5px;color:var(--text-muted)">위 유형·태그·분류 조건에 해당하는 항목 ${filterMatchCount}개</span>
-        <button class="btn btn-danger btn-sm" onclick="deleteReviewFilterMatches()" ${filterMatchCount ? '' : 'disabled'}>🗑 이 조건 항목 삭제</button>
-      </div>
-      <div id="review-delete-msg"></div>
-      `}
     </div>
   `;
-}
-
-function getReviewFilterMatches() {
-  return items.filter(it => {
-    if (reviewFilterType !== 'all' && it.type !== reviewFilterType) return false;
-    if (reviewFilterTag !== 'all' && it.tag !== reviewFilterTag) return false;
-    if (reviewFilterBatch !== 'all' && it.batch !== reviewFilterBatch) return false;
-    return true;
-  });
-}
-
-function reviewFilterDescription() {
-  const parts = [
-    reviewFilterType === 'all' ? '전체 유형' : (reviewFilterType === 'quiz' ? '예상문제' : '플래시카드'),
-    reviewFilterTag === 'all' ? '전체 태그' : `태그 "${reviewFilterTag}"`,
-    reviewFilterBatch === 'all' ? '전체 분류' : `분류 "${reviewFilterBatch}"`
-  ];
-  return parts.join(' / ');
-}
-
-function deleteReviewFilterMatches() {
-  if (guestMode) return;
-  const toDelete = getReviewFilterMatches();
-  if (!toDelete.length) { showMsg('review-delete-msg', '해당 조건의 항목이 없습니다.', false); return; }
-  if (!confirm(`[${reviewFilterDescription()}] 조건에 해당하는 ${toDelete.length}개 항목을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
-  const ids = new Set(toDelete.map(it => it.id));
-  toDelete.forEach(it => persistRemove(it.id));
-  items = items.filter(it => !ids.has(it.id));
-  saveItems();
-  showMsg('review-delete-msg', `${toDelete.length}개 항목을 삭제했습니다.`, true);
-  renderReviewTab();
 }
 
 function startReview() {
@@ -1103,12 +1065,31 @@ function renderReviewSession() {
   const reasons = reasonTags(item).map(r => `<span class="stat-chip stat-new">${escapeHtml(r)}</span>`).join(' ');
   el.innerHTML = `
     <div class="card">
+      ${guestMode ? '' : `
+      <div class="session-toolbar">
+        <button class="btn btn-danger btn-sm" onclick="deleteReviewQueueAll()">🗑 이 세트 전체 삭제 (${reviewQueue.length}개)</button>
+      </div>
+      `}
       <div class="review-progress">${reviewIdx + 1} / ${reviewQueue.length}　${reasons}</div>
       <div id="session-wrap"></div>
     </div>
   `;
   if (item.type === 'flashcard') renderFlashcardSession(item);
   else renderQuizSession(item);
+}
+
+function deleteReviewQueueAll() {
+  if (guestMode || !reviewQueue.length) return;
+  const n = reviewQueue.length;
+  if (!confirm(`현재 열려 있는 복습 세트 ${n}개 항목을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  const ids = new Set(reviewQueue.map(it => it.id));
+  reviewQueue.forEach(it => persistRemove(it.id));
+  items = items.filter(it => !ids.has(it.id));
+  saveItems();
+  reviewQueue = [];
+  reviewActive = false;
+  document.removeEventListener('keydown', handleSessionKeydown);
+  renderReviewTab();
 }
 
 function renderFlashcardSession(item) {
