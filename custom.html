@@ -505,8 +505,44 @@ function renderAddTab() {
       </div>
       <div id="import-msg"></div>
     </div>
+    <div class="card">
+      <div class="card-title">🗑 분류별 일괄 삭제</div>
+      <div class="card-sub">선택한 분류(예: "2024년 기출 1회차")에 속한 항목을 한 번에 삭제합니다. 되돌릴 수 없습니다.</div>
+      <div class="btn-row">
+        <select id="batch-delete-select">${batchDeleteOptions()}</select>
+        <button class="btn btn-danger" onclick="deleteBatch()">선택한 분류 삭제</button>
+      </div>
+      <div id="batch-delete-msg"></div>
+    </div>
   `;
   renderAddForm();
+}
+
+function batchDeleteOptions() {
+  const counts = new Map();
+  items.forEach(it => {
+    const b = it.batch || '';
+    if (!b) return;
+    counts.set(b, (counts.get(b) || 0) + 1);
+  });
+  const batches = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b, 'ko'));
+  if (!batches.length) return `<option value="">분류가 지정된 항목이 없습니다</option>`;
+  return batches.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)} (${counts.get(b)}개)</option>`).join('');
+}
+
+function deleteBatch() {
+  if (guestMode) return;
+  const sel = document.getElementById('batch-delete-select');
+  const batch = sel && sel.value;
+  if (!batch) { showMsg('batch-delete-msg', '삭제할 분류를 선택해주세요.', false); return; }
+  const toDelete = items.filter(it => it.batch === batch);
+  if (!toDelete.length) { showMsg('batch-delete-msg', '해당 분류의 항목이 없습니다.', false); return; }
+  if (!confirm(`"${batch}" 분류의 ${toDelete.length}개 항목을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  toDelete.forEach(it => persistRemove(it.id));
+  items = items.filter(it => it.batch !== batch);
+  saveItems();
+  showMsg('batch-delete-msg', `"${batch}" 분류의 ${toDelete.length}개 항목을 삭제했습니다.`, true);
+  renderAddTab();
 }
 
 function setAddType(t) {
@@ -633,6 +669,15 @@ function cancelEdit() {
   renderAddForm();
 }
 
+function normSig(s) { return (s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+
+function itemSignature(it) {
+  if (it.type === 'quiz') {
+    return 'quiz|' + normSig(it.text) + '|' + it.choices.map(normSig).join('|') + '|' + it.answer;
+  }
+  return 'flashcard|' + normSig(it.q) + '|' + normSig(it.a);
+}
+
 function handleBulkImport() {
   if (guestMode) return;
   const raw = document.getElementById('bulk-import-text').value.trim();
@@ -640,20 +685,27 @@ function handleBulkImport() {
   let parsed;
   try { parsed = JSON.parse(raw); } catch (e) { showMsg('import-msg', 'JSON 형식이 올바르지 않습니다: ' + e.message, false); return; }
   if (!Array.isArray(parsed)) { showMsg('import-msg', '최상위는 배열([...]) 이어야 합니다.', false); return; }
-  let added = 0;
+  const seen = new Set(items.map(itemSignature));
+  let added = 0, skipped = 0, dup = 0;
   parsed.forEach(raw2 => {
     if (!raw2 || typeof raw2 !== 'object') return;
     const norm = normalizeItem(Object.assign({}, raw2, { id: null }));
-    if (norm.type === 'flashcard' && (!norm.q || !norm.a)) return;
-    if (norm.type === 'quiz' && (!norm.text || norm.choices.some(c => !c))) return;
+    if (norm.type === 'flashcard' && (!norm.q || !norm.a)) { skipped++; return; }
+    if (norm.type === 'quiz' && (!norm.text || norm.choices.some(c => !c))) { skipped++; return; }
+    const sig = itemSignature(norm);
+    if (seen.has(sig)) { dup++; return; }
+    seen.add(sig);
     items.push(norm);
     persistUpsert(norm);
     added++;
   });
   saveItems();
   if (added > 0) {
-    showMsg('import-msg', `${added}개 항목을 추가했습니다.`, true);
+    const extra = [dup ? `중복 ${dup}개 건너뜀` : '', skipped ? `형식 오류 ${skipped}개 건너뜀` : ''].filter(Boolean).join(', ');
+    showMsg('import-msg', `${added}개 항목을 추가했습니다.${extra ? ` (${extra})` : ''}`, true);
     document.getElementById('bulk-import-text').value = '';
+  } else if (dup > 0) {
+    showMsg('import-msg', `이미 모두 등록된 항목이라 추가하지 않았습니다. (중복 ${dup}개)`, false);
   } else {
     showMsg('import-msg', '유효한 항목을 찾지 못했습니다. 형식을 확인해주세요.', false);
   }
@@ -730,7 +782,8 @@ function handleTableImport() {
   const rows = parseDelimited(raw.trim(), delim);
   let start = 0;
   if (rows.length && /^(유형|type)$/i.test((rows[0][0] || '').trim())) start = 1;
-  let added = 0, skipped = 0;
+  const seen = new Set(items.map(itemSignature));
+  let added = 0, skipped = 0, dup = 0;
   for (let i = start; i < rows.length; i++) {
     const r = rows[i];
     if (!r || !r.some(c => c && c.trim())) continue;
@@ -748,14 +801,20 @@ function handleTableImport() {
       raw2 = { type: 'flashcard', q: question, a: answerText, explanation, tag, batch, starred: parseStarCell(starredCell) };
     }
     const norm = normalizeItem(raw2);
+    const sig = itemSignature(norm);
+    if (seen.has(sig)) { dup++; continue; }
+    seen.add(sig);
     items.push(norm);
     persistUpsert(norm);
     added++;
   }
   saveItems();
   if (added > 0) {
-    showMsg('table-msg', `${added}개 추가되었습니다.${skipped ? ` (${skipped}개는 형식이 맞지 않아 건너뜀)` : ''}`, true);
+    const extra = [dup ? `중복 ${dup}개 건너뜀` : '', skipped ? `형식 오류 ${skipped}개 건너뜀` : ''].filter(Boolean).join(', ');
+    showMsg('table-msg', `${added}개 추가되었습니다.${extra ? ` (${extra})` : ''}`, true);
     document.getElementById('table-import-text').value = '';
+  } else if (dup > 0) {
+    showMsg('table-msg', `이미 모두 등록된 항목이라 추가하지 않았습니다. (중복 ${dup}개)`, false);
   } else {
     showMsg('table-msg', '유효한 행을 찾지 못했습니다. 열 순서를 확인해주세요.', false);
   }
