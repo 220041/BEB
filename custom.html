@@ -816,52 +816,8 @@ function renderListTab() {
       </div>
       <div id="list-body"></div>
     </div>
-    ${guestMode ? '' : `
-    <div class="card">
-      <div class="card-title">🗑 카테고리별 일괄 삭제</div>
-      <div class="card-sub">태그(과목) 또는 분류(회차 등) 단위로 항목을 한 번에 삭제합니다. 되돌릴 수 없습니다.</div>
-      <div class="list-toolbar">
-        <select id="tag-delete-select">${categoryDeleteOptions('tag')}</select>
-        <button class="btn btn-danger btn-sm" onclick="deleteByCategory('tag')">선택한 태그 삭제</button>
-      </div>
-      <div class="list-toolbar">
-        <select id="batch-delete-select">${categoryDeleteOptions('batch')}</select>
-        <button class="btn btn-danger btn-sm" onclick="deleteByCategory('batch')">선택한 분류 삭제</button>
-      </div>
-      <div id="bulk-delete-msg"></div>
-    </div>
-    `}
   `;
   renderListBody();
-}
-
-function categoryDeleteOptions(field) {
-  const counts = new Map();
-  items.forEach(it => {
-    const v = it[field] || '';
-    if (!v) return;
-    counts.set(v, (counts.get(v) || 0) + 1);
-  });
-  const values = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b, 'ko'));
-  const emptyLabel = field === 'tag' ? '태그가 지정된 항목이 없습니다' : '분류가 지정된 항목이 없습니다';
-  if (!values.length) return `<option value="">${emptyLabel}</option>`;
-  return values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)} (${counts.get(v)}개)</option>`).join('');
-}
-
-function deleteByCategory(field) {
-  if (guestMode) return;
-  const sel = document.getElementById(field === 'tag' ? 'tag-delete-select' : 'batch-delete-select');
-  const value = sel && sel.value;
-  const label = field === 'tag' ? '태그' : '분류';
-  if (!value) { showMsg('bulk-delete-msg', `삭제할 ${label}를 선택해주세요.`, false); return; }
-  const toDelete = items.filter(it => it[field] === value);
-  if (!toDelete.length) { showMsg('bulk-delete-msg', `해당 ${label}의 항목이 없습니다.`, false); return; }
-  if (!confirm(`"${value}" ${label}의 ${toDelete.length}개 항목을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
-  toDelete.forEach(it => persistRemove(it.id));
-  items = items.filter(it => it[field] !== value);
-  saveItems();
-  showMsg('bulk-delete-msg', `"${value}" ${label}의 ${toDelete.length}개 항목을 삭제했습니다.`, true);
-  renderListTab();
 }
 
 function getFilteredItems() {
@@ -1004,6 +960,7 @@ function renderReviewTab() {
   const pool = getReviewPool();
   const maxN = Math.min(pool.length, 40);
   if (reviewCount > maxN) reviewCount = maxN;
+  const filterMatchCount = getReviewFilterMatches().length;
   const countOptions = [5, 10, 15, 20, 30, maxN]
     .filter((v, i, a) => v <= maxN && v > 0 && a.indexOf(v) === i)
     .sort((a, b) => a - b)
@@ -1041,8 +998,46 @@ function renderReviewTab() {
         <button class="btn btn-primary" onclick="startReview()">복습 시작</button>
       </div>
       ` : `<div class="empty-hint">선택한 조건에 맞는 항목이 없습니다.</div>`}
+      ${guestMode ? '' : `
+      <div class="review-setup" style="border-top:1px solid #E5E7EB;padding-top:12px;margin-top:4px;justify-content:space-between">
+        <span style="font-size:12.5px;color:var(--text-muted)">위 유형·태그·분류 조건에 해당하는 항목 ${filterMatchCount}개</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteReviewFilterMatches()" ${filterMatchCount ? '' : 'disabled'}>🗑 이 조건 항목 삭제</button>
+      </div>
+      <div id="review-delete-msg"></div>
+      `}
     </div>
   `;
+}
+
+function getReviewFilterMatches() {
+  return items.filter(it => {
+    if (reviewFilterType !== 'all' && it.type !== reviewFilterType) return false;
+    if (reviewFilterTag !== 'all' && it.tag !== reviewFilterTag) return false;
+    if (reviewFilterBatch !== 'all' && it.batch !== reviewFilterBatch) return false;
+    return true;
+  });
+}
+
+function reviewFilterDescription() {
+  const parts = [
+    reviewFilterType === 'all' ? '전체 유형' : (reviewFilterType === 'quiz' ? '예상문제' : '플래시카드'),
+    reviewFilterTag === 'all' ? '전체 태그' : `태그 "${reviewFilterTag}"`,
+    reviewFilterBatch === 'all' ? '전체 분류' : `분류 "${reviewFilterBatch}"`
+  ];
+  return parts.join(' / ');
+}
+
+function deleteReviewFilterMatches() {
+  if (guestMode) return;
+  const toDelete = getReviewFilterMatches();
+  if (!toDelete.length) { showMsg('review-delete-msg', '해당 조건의 항목이 없습니다.', false); return; }
+  if (!confirm(`[${reviewFilterDescription()}] 조건에 해당하는 ${toDelete.length}개 항목을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  const ids = new Set(toDelete.map(it => it.id));
+  toDelete.forEach(it => persistRemove(it.id));
+  items = items.filter(it => !ids.has(it.id));
+  saveItems();
+  showMsg('review-delete-msg', `${toDelete.length}개 항목을 삭제했습니다.`, true);
+  renderReviewTab();
 }
 
 function startReview() {
