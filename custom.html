@@ -126,6 +126,10 @@ button{font-family:inherit}
 .radio-row{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;cursor:pointer}
 .review-progress{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:14px}
 .session-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.review-preview-box{margin-top:14px;border-top:1px solid var(--section-line);padding-top:14px}
+.review-preview-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;font-size:13.5px}
+.review-preview-list{max-height:340px;overflow-y:auto;border:1.5px solid #E5E7EB;border-radius:10px;padding:0 10px}
+.review-preview-list .item-row:last-child{border-bottom:none}
 #session-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 .fc-card-outer{width:100%;max-width:560px;perspective:1000px}
 .fc-card{width:100%;min-height:200px;display:grid;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
@@ -935,6 +939,7 @@ let reviewFilterType = 'all';
 let reviewFilterTag = 'all';
 let reviewFilterBatch = 'all';
 let reviewScope = 'all'; // 'all' | 'confusing'
+let reviewPreviewOpen = false;
 
 function getReviewPool() {
   return items.filter(it => {
@@ -996,10 +1001,74 @@ function renderReviewTab() {
           ${countOptions}
         </select>
         <button class="btn btn-primary" onclick="startReview()">복습 시작</button>
+        <button class="btn btn-ghost" onclick="toggleReviewPreview()">${reviewPreviewOpen ? '확인 닫기' : '확인'}</button>
       </div>
       ` : `<div class="empty-hint">선택한 조건에 맞는 항목이 없습니다.</div>`}
+      <div id="review-preview-area"></div>
     </div>
   `;
+  renderReviewPreview();
+}
+
+function toggleReviewPreview() {
+  reviewPreviewOpen = !reviewPreviewOpen;
+  renderReviewTab();
+}
+
+function reviewFilterSummary() {
+  const parts = [
+    reviewFilterType === 'all' ? '전체 유형' : (reviewFilterType === 'quiz' ? '예상문제' : '플래시카드'),
+    reviewFilterTag === 'all' ? '전체 태그' : `태그 "${reviewFilterTag}"`,
+    reviewFilterBatch === 'all' ? '전체 분류' : `분류 "${reviewFilterBatch}"`
+  ];
+  if (reviewScope === 'confusing') parts.push('헷갈리는 것만');
+  return parts.join(' · ');
+}
+
+function renderReviewPreview() {
+  const area = document.getElementById('review-preview-area');
+  if (!area) return;
+  if (!reviewPreviewOpen) { area.innerHTML = ''; return; }
+  const matches = getReviewPool();
+  if (!matches.length) {
+    area.innerHTML = `<div class="review-preview-box"><div class="empty-hint">선택한 조건(${escapeHtml(reviewFilterSummary())})에 해당하는 항목이 없습니다.</div></div>`;
+    return;
+  }
+  const rows = matches.slice().sort((a, b) => b.createdAt - a.createdAt).map(it => {
+    const preview = it.type === 'quiz' ? it.text : it.q;
+    return `<div class="item-row">
+      <div class="item-type-icon">${it.type === 'quiz' ? '📝' : '🗂'}</div>
+      <div class="item-body">
+        <div class="item-text">${escapeHtml(preview)}</div>
+        <div class="item-meta">
+          ${it.tag ? `<span class="tag-chip">${escapeHtml(it.tag)}</span>` : ''}
+          ${it.batch ? `<span class="tag-chip batch-chip">${escapeHtml(it.batch)}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  area.innerHTML = `
+    <div class="review-preview-box">
+      <div class="review-preview-head">
+        <span>선택한 조건: ${escapeHtml(reviewFilterSummary())} — <strong>${matches.length}개</strong></span>
+        ${guestMode ? '' : `<button class="btn btn-danger btn-sm" onclick="deleteReviewPoolAll()">🗑 이 항목 전체 삭제</button>`}
+      </div>
+      <div class="review-preview-list">${rows}</div>
+    </div>
+  `;
+}
+
+function deleteReviewPoolAll() {
+  if (guestMode) return;
+  const matches = getReviewPool();
+  if (!matches.length) return;
+  if (!confirm(`[${reviewFilterSummary()}] 조건의 ${matches.length}개 항목을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  const ids = new Set(matches.map(it => it.id));
+  matches.forEach(it => persistRemove(it.id));
+  items = items.filter(it => !ids.has(it.id));
+  saveItems();
+  reviewPreviewOpen = false;
+  renderReviewTab();
 }
 
 function startReview() {
