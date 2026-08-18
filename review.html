@@ -142,21 +142,19 @@ button{font-family:inherit}
 .fc-label{font-size:11px;font-weight:700;letter-spacing:.1em;opacity:.5;margin-bottom:12px}
 .fc-text{font-size:17px;font-weight:600;line-height:1.6}
 .fc-hint{font-size:12px;color:var(--text-muted);margin-top:8px}
-.grade-row{display:flex;gap:16px;align-items:center}
-.grade-icon-btn{
-  width:56px;height:56px;border-radius:50%;font-size:24px;cursor:pointer;transition:all .15s;
-  display:flex;align-items:center;justify-content:center;background:var(--card-bg);
-}
-.grade-icon-btn.star{border:2.5px solid #F59E0B;color:#F59E0B}
-.grade-icon-btn.star:hover,.grade-icon-btn.star.filled{background:#F59E0B;color:#fff}
-.grade-icon-btn.check{border:2.5px solid #1a1a2e;color:#1a1a2e}
-.grade-icon-btn.check:hover,.grade-icon-btn.check.filled{background:#1a1a2e;color:#fff}
 .grade-kbd-hint{font-size:11.5px;color:var(--text-muted);margin-top:6px}
 .skip-link{font-size:12.5px;color:var(--text-muted);text-decoration:none;cursor:pointer;margin-top:12px}
 .skip-link:hover{color:#1a1a2e}
+.grade3-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.grade3-btn{padding:10px 18px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:all .12s;background:var(--card-bg)}
+.grade3-btn.yes{border:2.5px solid #16A34A;color:#16A34A}
+.grade3-btn.yes:hover,.grade3-btn.yes.selected,.grade3-btn.yes.filled{background:#16A34A;color:#fff}
+.grade3-btn.no{border:2.5px solid #DC2626;color:#DC2626}
+.grade3-btn.no:hover,.grade3-btn.no.selected,.grade3-btn.no.filled{background:#DC2626;color:#fff}
+.grade3-btn.confuse{border:2.5px solid #D97706;color:#D97706}
+.grade3-btn.confuse:hover,.grade3-btn.confuse.selected,.grade3-btn.confuse.filled{background:#D97706;color:#fff}
 #quiz-session-wrap{max-width:640px;width:100%}
 #session-next-area{margin-top:26px;text-align:center}
-#session-next-area .grade-row{justify-content:center}
 .q-text{font-size:15.5px;font-weight:600;margin-bottom:14px;line-height:1.6}
 .choices{display:flex;flex-direction:column;gap:8px}
 .choice-btn{text-align:left;padding:12px 14px;border-radius:8px;border:1.5px solid #E5E7EB;background:var(--card-bg);font-size:14.5px;cursor:pointer;transition:all .12s;line-height:1.5}
@@ -203,6 +201,7 @@ button{font-family:inherit}
     <h1>📘 <span class="label-text">내 문제 &amp; 복습</span></h1>
     <nav id="page-tabs">
       <button class="ptab" data-tab="review" onclick="switchPageTab('review')" title="오늘의 복습">🎯 <span class="label-text">오늘의 복습</span></button>
+      <button class="ptab" data-tab="reviewlog" onclick="switchPageTab('reviewlog')" title="LOG">🗒 <span class="label-text">LOG</span></button>
       <button class="ptab" data-tab="list" onclick="switchPageTab('list')" title="내 목록">📋 <span class="label-text">내 목록</span></button>
       <button class="ptab" data-tab="add" onclick="switchPageTab('add')" title="등록">➕ <span class="label-text">등록</span></button>
       <a class="ptab" href="cbt.html" title="CBT 모의고사">🖥 <span class="label-text">CBT</span></a>
@@ -300,11 +299,13 @@ function enterGuestMode() {
   }
   guestMode = true;
   currentUser = null;
-  currentPageTab = currentPageTab === 'add' ? 'review' : currentPageTab;
+  currentPageTab = (currentPageTab === 'add' || currentPageTab === 'reviewlog') ? 'review' : currentPageTab;
   document.getElementById('auth-status').innerHTML =
     `<span class="label-text">👀 게스트(읽기 전용)</span><button class="btn btn-ghost btn-sm" onclick="exitGuestMode()" title="게스트 모드 종료">🚪<span class="label-text"> 로그인 화면으로</span></button>`;
   const addTabBtn = document.querySelector('.ptab[data-tab="add"]');
+  const reviewLogTabBtn = document.querySelector('.ptab[data-tab="reviewlog"]');
   if (addTabBtn) addTabBtn.style.display = 'none';
+  if (reviewLogTabBtn) reviewLogTabBtn.style.display = 'none';
   document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentPageTab));
   document.getElementById('page-content').innerHTML = `<div class="card"><div class="empty-hint">샘플 데이터를 불러오는 중...</div></div>`;
   db.collection('users').doc(DEMO_UID).collection('items').get().then(snap => {
@@ -322,7 +323,9 @@ function exitGuestMode() {
   items = loadItems();
   document.getElementById('auth-status').innerHTML = '';
   const addTabBtn = document.querySelector('.ptab[data-tab="add"]');
+  const reviewLogTabBtn = document.querySelector('.ptab[data-tab="reviewlog"]');
   if (addTabBtn) addTabBtn.style.display = '';
+  if (reviewLogTabBtn) reviewLogTabBtn.style.display = '';
   renderAuthScreen();
 }
 
@@ -363,6 +366,7 @@ function startAppForUser() {
   document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentPageTab));
   subscribeItems();
   offerLegacyMigrationIfNeeded();
+  fetchReviewLogsOnce();
 }
 
 function itemsCollection() {
@@ -390,6 +394,38 @@ function persistUpsert(item) {
 function persistRemove(id) {
   if (!db || !currentUser) return;
   itemsCollection().doc(id).delete().catch(e => console.error('delete failed', e));
+}
+
+// ─── REVIEW LOGS (AI 전달용 복습결과 로그) ─────────────────────────────────────
+const REVIEW_LOG_KEY = 'mge_review_logs';
+let reviewLogs = loadReviewLogs();
+
+function loadReviewLogs() {
+  try { return JSON.parse(localStorage.getItem(REVIEW_LOG_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+function saveReviewLogs() { localStorage.setItem(REVIEW_LOG_KEY, JSON.stringify(reviewLogs)); }
+
+function reviewLogsCollection() {
+  return db.collection('users').doc(currentUser.uid).collection('reviewLogs');
+}
+function persistReviewLogUpsert(log) {
+  if (!db || !currentUser || !log) return;
+  reviewLogsCollection().doc(log.id).set(log).catch(e => console.error('save failed', e));
+}
+function persistReviewLogRemove(id) {
+  if (!db || !currentUser) return;
+  reviewLogsCollection().doc(id).delete().catch(e => console.error('delete failed', e));
+}
+function fetchReviewLogsOnce() {
+  if (!db || !currentUser) return;
+  reviewLogsCollection().get().then(snap => {
+    const byId = new Map(reviewLogs.map(l => [l.id, l]));
+    snap.docs.forEach(d => byId.set(d.id, d.data()));
+    reviewLogs = Array.from(byId.values());
+    saveReviewLogs();
+    if (currentPageTab === 'reviewlog') renderReviewLogTab();
+  }).catch(e => console.error('reviewLogs fetch failed', e));
 }
 
 function offerLegacyMigrationIfNeeded() {
@@ -460,10 +496,11 @@ function reasonTags(item) {
 // ─── TOP TABS ────────────────────────────────────────────────────────────────
 function switchPageTab(tab) {
   if (!currentUser && !guestMode) return;
-  if (guestMode && tab === 'add') return;
+  if (guestMode && (tab === 'add' || tab === 'reviewlog')) return;
   currentPageTab = tab;
   document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   if (tab === 'review') renderReviewTab();
+  else if (tab === 'reviewlog') renderReviewLogTab();
   else if (tab === 'list') renderListTab();
   else if (tab === 'add') renderAddTab();
 }
@@ -943,6 +980,11 @@ let reviewFilterTag = 'all';
 let reviewFilterBatch = 'all';
 let reviewScope = 'all'; // 'all' | 'confusing'
 let reviewPreviewOpen = false;
+let reviewPendingGrade = null; // 'yes' | 'no' | 'confuse' | null (armed by 1/2/3, confirmed by Enter)
+let reviewJudgments = {}; // itemId -> 'yes' | 'no' | 'confuse'
+let reviewSessionResults = []; // [{num, type, question, answer, judgment}]
+let reviewSessionStartTs = null;
+let reviewYes = 0, reviewNo = 0, reviewConfuse = 0;
 
 function getReviewPool() {
   return items.filter(it => {
@@ -1121,6 +1163,11 @@ function startReview() {
   reviewWrong = 0;
   reviewFlipped = false;
   reviewActive = true;
+  reviewPendingGrade = null;
+  reviewJudgments = {};
+  reviewSessionResults = [];
+  reviewYes = 0; reviewNo = 0; reviewConfuse = 0;
+  reviewSessionStartTs = Date.now();
   document.addEventListener('keydown', handleSessionKeydown);
   renderReviewSession();
 }
@@ -1130,29 +1177,35 @@ function handleSessionKeydown(e) {
   const ae = document.activeElement;
   const tag = (ae && ae.tagName) || '';
   const isKeyCapture = ae && ae.id === 'session-key-capture';
-  if (!isKeyCapture && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT')) return;
+  if (!isKeyCapture && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (ae && ae.isContentEditable))) return;
   const item = reviewQueue[reviewIdx];
-  if (item.type === 'flashcard') {
-    if (!reviewFlipped) {
-      if (e.key === 'Enter') { e.preventDefault(); flipSessionCard(); }
-    } else {
-      if (e.key === '1') { e.preventDefault(); gradeCurrent(true); }
-      else if (e.key === '2') { e.preventDefault(); gradeCurrent(false); }
-      else if (e.key === 'Enter') { e.preventDefault(); skipCurrent(); }
-    }
-  } else {
-    if (!quizAnswered) {
-      if (['1', '2', '3', '4'].includes(e.key)) { e.preventDefault(); pickSessionChoice(parseInt(e.key)); }
-    } else {
-      if (e.key === '1') { e.preventDefault(); assessConfidence(true); }
-      else if (e.key === '2') { e.preventDefault(); assessConfidence(false); }
-      else if (e.key === 'Enter') { e.preventDefault(); nextReviewItem(); }
-    }
+  if (item.type === 'flashcard' && !reviewFlipped) {
+    if (e.key === 'Enter') { e.preventDefault(); flipSessionCard(); }
+    return;
   }
+  if (item.type === 'quiz' && !quizAnswered) {
+    if (['1', '2', '3', '4'].includes(e.key)) { e.preventDefault(); pickSessionChoice(parseInt(e.key)); }
+    return;
+  }
+  // 판정 단계: 1=YES 2=NO 3=CONFUSE (선택), Enter=확정 후 다음
+  if (e.key === '1') { e.preventDefault(); selectPendingGrade('yes'); }
+  else if (e.key === '2') { e.preventDefault(); selectPendingGrade('no'); }
+  else if (e.key === '3') { e.preventDefault(); selectPendingGrade('confuse'); }
+  else if (e.key === 'Enter') { e.preventDefault(); confirmPendingGrade(); }
+}
+
+function selectPendingGrade(g) {
+  reviewPendingGrade = g;
+  document.querySelectorAll('.grade3-btn').forEach(b => b.classList.toggle('selected', b.dataset.g === g));
+}
+
+function confirmPendingGrade() {
+  if (reviewPendingGrade) gradeAndAdvance(reviewPendingGrade);
+  else skipCurrent();
 }
 
 function flashGradeButton(kind, cb) {
-  const btn = document.querySelector('.grade-icon-btn.' + kind);
+  const btn = document.querySelector('.grade3-btn[data-g="' + kind + '"]');
   if (btn) {
     btn.classList.add('filled');
     setTimeout(cb, 160);
@@ -1161,14 +1214,40 @@ function flashGradeButton(kind, cb) {
   }
 }
 
+function recordJudgment(item, judgment) {
+  const it = items.find(x => x.id === item.id);
+  if (it && !guestMode) { it.confused = judgment !== 'yes'; saveItems(); persistUpsert(it); }
+  reviewJudgments[item.id] = judgment;
+  if (judgment === 'yes') reviewYes++;
+  else if (judgment === 'no') reviewNo++;
+  else reviewConfuse++;
+  const question = item.type === 'quiz' ? item.text : item.q;
+  const answer = item.type === 'quiz' ? `${item.answer}. ${item.choices[item.answer - 1] || ''}` : item.a;
+  reviewSessionResults.push({ num: reviewSessionResults.length + 1, type: item.type, question, answer, judgment });
+}
+
+function gradeAndAdvance(judgment) {
+  const item = reviewQueue[reviewIdx];
+  if (item.type === 'flashcard') {
+    recordResult(item, judgment === 'yes');
+    if (judgment === 'yes') reviewCorrect++; else reviewWrong++;
+  }
+  recordJudgment(item, judgment);
+  reviewPendingGrade = null;
+  flashGradeButton(judgment, () => { reviewIdx++; renderReviewSession(); });
+}
+
 function renderReviewSession() {
   const el = document.getElementById('page-content');
   el.classList.add('center-mode');
   if (reviewIdx >= reviewQueue.length) {
+    const totalElapsedSec = reviewSessionStartTs ? Math.max(0, Math.round((Date.now() - reviewSessionStartTs) / 1000)) : 0;
+    const graded = reviewSessionResults.length;
     el.innerHTML = `<div class="card"><div class="session-summary">
-      <div class="big">${reviewCorrect} / ${reviewQueue.length}</div>
-      <p>오늘의 복습을 마쳤습니다. 틀리거나 오래된 항목은 다음 세션에서 다시 등장합니다.</p>
-      <button class="btn btn-primary" onclick="renderReviewTab()">복습 탭으로 돌아가기</button>
+      <div class="big">YES ${reviewYes} · NO ${reviewNo} · CONFUSE ${reviewConfuse}</div>
+      <p>오늘의 복습을 마쳤습니다 (판정 ${graded}개 / 전체 ${reviewQueue.length}개, 소요 ${formatElapsed(totalElapsedSec)}). 틀리거나 오래된 항목은 다음 세션에서 다시 등장합니다.</p>
+      ${guestMode ? '' : `<div class="btn-row" style="justify-content:center;margin-bottom:10px"><button class="btn btn-primary" onclick="finishReviewSessionAndCopy()">📋 AI 복습결과 복사</button></div><div id="review-log-copy-msg"></div>`}
+      <button class="btn btn-ghost" onclick="renderReviewTab()">복습 탭으로 돌아가기</button>
     </div></div>`;
     return;
   }
@@ -1211,13 +1290,20 @@ function renderFlashcardSession(item) {
     </div>
     <div id="session-grade-area" style="visibility:hidden">
       ${expHtml}
-      <div class="grade-row">
-        <button class="grade-icon-btn star" onclick="gradeCurrent(true)" title="안다 (1)">★</button>
-        <button class="grade-icon-btn check" onclick="gradeCurrent(false)" title="모른다 (2)">✓</button>
-      </div>
-      <div class="grade-kbd-hint">1 = know　2 = confuse</div>
-      <div class="skip-link" onclick="skipCurrent()">건너뛰고 다음 → (Enter)</div>
+      ${grade3ButtonsHtml()}
     </div>
+  `;
+}
+
+function grade3ButtonsHtml() {
+  return `
+    <div class="grade3-row">
+      <button class="grade3-btn yes" data-g="yes" onclick="gradeAndAdvance('yes')" title="YES (1)">1 YES</button>
+      <button class="grade3-btn no" data-g="no" onclick="gradeAndAdvance('no')" title="NO (2)">2 NO</button>
+      <button class="grade3-btn confuse" data-g="confuse" onclick="gradeAndAdvance('confuse')" title="CONFUSE (3)">3 CONFUSE</button>
+    </div>
+    <div class="grade-kbd-hint">숫자 1/2/3로 선택 후 Enter로 확정 · 버튼 클릭 시 바로 확정</div>
+    <div class="skip-link" onclick="skipCurrent()">판정 없이 건너뛰기 (선택 없이 Enter)</div>
   `;
 }
 
@@ -1229,16 +1315,8 @@ function flipSessionCard() {
   if (gradeArea) gradeArea.style.visibility = reviewFlipped ? 'visible' : 'hidden';
 }
 
-function gradeCurrent(correct) {
-  const item = reviewQueue[reviewIdx];
-  recordResult(item, correct);
-  const it = items.find(x => x.id === item.id);
-  if (it && !guestMode) { it.confused = !correct; saveItems(); persistUpsert(it); }
-  if (correct) reviewCorrect++; else reviewWrong++;
-  flashGradeButton(correct ? 'star' : 'check', () => { reviewIdx++; renderReviewSession(); });
-}
-
 function skipCurrent() {
+  reviewPendingGrade = null;
   reviewIdx++;
   renderReviewSession();
 }
@@ -1268,12 +1346,7 @@ function renderQuizSession(item) {
       <div id="session-result" class="session-result" style="visibility:hidden">✅ 정답입니다</div>
       <div class="explanation" id="session-exp" style="${item.explanation ? 'visibility:hidden' : 'display:none'}">${escapeHtml(item.explanation || '')}</div>
       <div id="session-next-area" style="visibility:hidden">
-        <div class="grade-row">
-          <button class="grade-icon-btn star" onclick="assessConfidence(true)" title="자신있게 맞음 (1)">★</button>
-          <button class="grade-icon-btn check" onclick="assessConfidence(false)" title="헷갈렸음 (2)">✓</button>
-        </div>
-        <div class="grade-kbd-hint">1 = know　2 = confuse</div>
-        <div class="skip-link" onclick="nextReviewItem()">건너뛰고 다음 → (Enter)</div>
+        ${grade3ButtonsHtml()}
       </div>
     </div>
   `;
@@ -1306,16 +1379,172 @@ function pickSessionChoice(ci) {
   if (correctNow) reviewCorrect++; else reviewWrong++;
 }
 
-function assessConfidence(isConfident) {
-  const item = reviewQueue[reviewIdx];
-  const it = items.find(x => x.id === item.id);
-  if (it && !guestMode) { it.confused = !isConfident; saveItems(); persistUpsert(it); }
-  flashGradeButton(isConfident ? 'star' : 'check', () => nextReviewItem());
+// ─── AI 전달용 로그 공용 유틸 ───────────────────────────────────────────────────
+function formatElapsed(totalSec) {
+  totalSec = Math.max(0, Math.round(totalSec || 0));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}시간 ${m}분 ${s}초`;
+  if (m > 0) return `${m}분 ${s}초`;
+  return `${s}초`;
 }
 
-function nextReviewItem() {
-  reviewIdx++;
-  renderReviewSession();
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function deriveCommonField(list, key) {
+  const vals = Array.from(new Set(list.map(it => (it[key] || '').trim()).filter(Boolean)));
+  if (vals.length === 1) return vals[0];
+  if (vals.length === 0) return '';
+  return vals.join(', ');
+}
+
+function fallbackCopyText(text, done, fail) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) done(); else fail(new Error('execCommand copy 실패'));
+  } catch (e) { fail(e); }
+}
+
+function copyTextToClipboard(text, msgElId, successMsg) {
+  const done = () => { if (msgElId) showMsg(msgElId, successMsg, true); };
+  const fail = (e) => { if (msgElId) showMsg(msgElId, '복사에 실패했습니다: ' + (e && e.message ? e.message : '알 수 없는 오류'), false); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopyText(text, done, fail));
+  } else {
+    fallbackCopyText(text, done, fail);
+  }
+}
+
+// ─── 복습 LOG (AI 전달용) ───────────────────────────────────────────────────────
+function buildReviewLogText(log) {
+  const lines = [];
+  lines.push('[BEB 복습결과]', '');
+  lines.push(`과목: ${log.subject || '-'}`);
+  lines.push(`batch: ${log.batch || '-'}`);
+  lines.push(`복습일시: ${formatDateTime(log.completedAt)}`, '');
+  lines.push(`복습문제수: ${log.results.length}`, '');
+  lines.push(`YES: ${log.yes}`);
+  lines.push(`NO: ${log.no}`);
+  lines.push(`CONFUSE: ${log.confuse}`, '');
+  lines.push(`복습 전체시간: ${formatElapsed(log.total_review_elapsed_sec)}`);
+  lines.push(`복습 전체시간(초): ${log.total_review_elapsed_sec}`, '');
+  lines.push('※ 문제확인·해설확인·A4 필기시간 포함', '');
+  log.results.forEach(r => {
+    const judgLabel = r.judgment === 'yes' ? 'YES' : r.judgment === 'no' ? 'NO' : 'CONFUSE';
+    lines.push(`Q${r.num}`, '');
+    lines.push('문제:', r.question, '');
+    lines.push('정답:', r.answer, '');
+    lines.push('복습판정:', judgLabel, '');
+  });
+  lines.push('[AI 전달 지시]', '');
+  lines.push('이것은 사용자가 BEB에서 실시한 실제 복습 결과입니다.', '');
+  lines.push('YES / NO / CONFUSE는');
+  lines.push('사용자가 복습하면서 직접 판단한 현재 인출상태입니다.', '');
+  lines.push('특히:', '');
+  lines.push('NO');
+  lines.push('= 우선 보강 대상', '');
+  lines.push('CONFUSE');
+  lines.push('= 맞힐 수 있어도 아직 불안정하므로 간격 인출 대상', '');
+  lines.push('YES');
+  lines.push('= 현재 비교적 안정적인 개념', '');
+  lines.push('으로 해석해주세요.', '');
+  lines.push('복습 전체시간은');
+  lines.push('문제확인·해설확인·A4 필기가 포함된 학습시간이므로');
+  lines.push('문제 난이도나 실력의 직접적인 지표로 사용하지 말고');
+  lines.push('학습 처리량 판단용으로만 사용해주세요.', '');
+  lines.push('이 결과를 붙여넣었다는 이유만으로');
+  lines.push('즉시 다음 문제를 생성하지 말고,');
+  lines.push('사용자가 "다음"이라고 입력할 때 다음 PART를 생성해주세요.');
+  return lines.join('\n');
+}
+
+function finishReviewSessionAndCopy() {
+  if (guestMode) return;
+  const totalElapsedSec = reviewSessionStartTs ? Math.max(0, Math.round((Date.now() - reviewSessionStartTs) / 1000)) : 0;
+  const subject = reviewFilterTag !== 'all' ? reviewFilterTag : deriveCommonField(reviewQueue, 'tag');
+  const batch = reviewFilterBatch !== 'all' ? reviewFilterBatch : deriveCommonField(reviewQueue, 'batch');
+  const log = {
+    id: genId(),
+    mode: 'review',
+    subject, batch,
+    completedAt: Date.now(),
+    total_review_elapsed_sec: totalElapsedSec,
+    yes: reviewYes, no: reviewNo, confuse: reviewConfuse,
+    results: reviewSessionResults.slice()
+  };
+  reviewLogs.unshift(log);
+  saveReviewLogs();
+  persistReviewLogUpsert(log);
+  copyTextToClipboard(buildReviewLogText(log), 'review-log-copy-msg', 'AI 전달용 복습결과가 복사되었습니다.');
+}
+
+// ─── LOG TAB (지난 복습 로그) ───────────────────────────────────────────────────
+function renderReviewLogTab() {
+  const el = document.getElementById('page-content');
+  el.classList.remove('center-mode');
+  el.innerHTML = `
+    ${guestBannerHtml()}
+    <div class="card">
+      <div class="card-title">복습 LOG (${reviewLogs.length}개)</div>
+      <div class="card-sub">완료한 복습 세션의 결과입니다. "복사" 버튼으로 ChatGPT 과목방에 붙여넣을 텍스트를 다시 복사할 수 있습니다.</div>
+      <div id="review-log-list"></div>
+      <div id="review-log-msg"></div>
+    </div>
+  `;
+  renderReviewLogList();
+}
+
+function renderReviewLogList() {
+  const el = document.getElementById('review-log-list');
+  if (!el) return;
+  if (!reviewLogs.length) { el.innerHTML = `<div class="empty-hint">아직 완료된 복습 로그가 없습니다. "오늘의 복습"을 마치면 여기에 쌓입니다.</div>`; return; }
+  el.innerHTML = reviewLogs.slice().sort((a, b) => b.completedAt - a.completedAt).map(log => `
+    <div class="item-row">
+      <div class="item-type-icon">🗒</div>
+      <div class="item-body">
+        <div class="item-text">${escapeHtml(log.subject || '전체')}${log.batch ? ' · ' + escapeHtml(log.batch) : ''}</div>
+        <div class="item-meta">
+          <span>${formatDateTime(log.completedAt)}</span>
+          <span>${log.results.length}문제 · ${formatElapsed(log.total_review_elapsed_sec)}</span>
+          <span class="stat-chip stat-new">YES ${log.yes}</span>
+          <span class="stat-chip stat-wrong">NO ${log.no}</span>
+          <span class="stat-chip stat-wrong">CONFUSE ${log.confuse}</span>
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="icon-btn" title="AI 전달용으로 복사" onclick="copyExistingReviewLog('${log.id}')">📋</button>
+        ${guestMode ? '' : `<button class="icon-btn" title="삭제" onclick="deleteReviewLog('${log.id}')">🗑️</button>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+function copyExistingReviewLog(id) {
+  const log = reviewLogs.find(l => l.id === id);
+  if (!log) return;
+  copyTextToClipboard(buildReviewLogText(log), 'review-log-msg', 'AI 전달용 복습결과가 복사되었습니다.');
+}
+
+function deleteReviewLog(id) {
+  if (guestMode) return;
+  if (!confirm('이 복습 로그를 삭제할까요?')) return;
+  reviewLogs = reviewLogs.filter(l => l.id !== id);
+  saveReviewLogs();
+  persistReviewLogRemove(id);
+  renderReviewLogList();
 }
 
 // ─── UTIL ────────────────────────────────────────────────────────────────────
