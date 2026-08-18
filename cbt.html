@@ -218,7 +218,8 @@ button{font-family:inherit}
     <h1>🖥 <span class="label-text">CBT 모의고사</span></h1>
     <nav id="page-tabs">
       <button class="ptab" data-tab="take" onclick="switchPageTab('take')" title="시험 응시">📝 <span class="label-text">시험 응시</span></button>
-      <button class="ptab" data-tab="manage" onclick="switchPageTab('manage')" title="회차 관리">📚 <span class="label-text">회차 관리</span></button>
+      <button class="ptab" data-tab="manage" onclick="switchPageTab('manage')" title="회차 추가">➕ <span class="label-text">회차추가</span></button>
+      <button class="ptab" data-tab="sessions" onclick="switchPageTab('sessions')" title="회차 관리">🗂 <span class="label-text">회차관리</span></button>
       <button class="ptab" data-tab="history" onclick="switchPageTab('history')" title="응시 기록">📊 <span class="label-text">응시 기록</span></button>
     </nav>
     <div id="auth-status"></div>
@@ -307,12 +308,14 @@ function enterGuestMode(){
   }
   guestMode = true;
   currentUser = null;
-  currentPageTab = (currentPageTab === 'manage' || currentPageTab === 'history') ? 'take' : currentPageTab;
+  currentPageTab = (currentPageTab === 'manage' || currentPageTab === 'sessions' || currentPageTab === 'history') ? 'take' : currentPageTab;
   document.getElementById('auth-status').innerHTML =
     `<span class="label-text">👀 게스트(읽기 전용)</span><button class="btn btn-ghost btn-sm" onclick="exitGuestMode()" title="게스트 모드 종료">🚪<span class="label-text"> 로그인 화면으로</span></button>`;
   const manageTabBtn = document.querySelector('.ptab[data-tab="manage"]');
+  const sessionsTabBtn = document.querySelector('.ptab[data-tab="sessions"]');
   const historyTabBtn = document.querySelector('.ptab[data-tab="history"]');
   if(manageTabBtn) manageTabBtn.style.display = 'none';
+  if(sessionsTabBtn) sessionsTabBtn.style.display = 'none';
   if(historyTabBtn) historyTabBtn.style.display = 'none';
   document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentPageTab));
   document.getElementById('page-content').innerHTML = `<div class="card"><div class="empty-hint">샘플 회차를 불러오는 중...</div></div>`;
@@ -331,8 +334,10 @@ function exitGuestMode(){
   attempts = loadAttempts();
   document.getElementById('auth-status').innerHTML = '';
   const manageTabBtn = document.querySelector('.ptab[data-tab="manage"]');
+  const sessionsTabBtn = document.querySelector('.ptab[data-tab="sessions"]');
   const historyTabBtn = document.querySelector('.ptab[data-tab="history"]');
   if(manageTabBtn) manageTabBtn.style.display = '';
+  if(sessionsTabBtn) sessionsTabBtn.style.display = '';
   if(historyTabBtn) historyTabBtn.style.display = '';
   renderAuthScreen();
 }
@@ -395,11 +400,12 @@ function persistAttemptUpsert(a){ if(!db || !currentUser) return; attemptsCollec
 // ─── PAGE TABS ─────────────────────────────────────────────────────────────
 function switchPageTab(tab){
   if(!currentUser && !guestMode) return;
-  if(guestMode && (tab === 'manage' || tab === 'history')) return;
+  if(guestMode && (tab === 'manage' || tab === 'sessions' || tab === 'history')) return;
   currentPageTab = tab;
   document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   if(tab === 'take') renderTakeTab();
   else if(tab === 'manage') renderManageTab();
+  else if(tab === 'sessions') renderSessionsTab();
   else if(tab === 'history') renderHistoryTab();
 }
 
@@ -606,6 +612,79 @@ function deleteExamSet(id){
   saveSets();
   persistSetRemove(id);
   renderSetList();
+  renderSessionsList();
+}
+
+// ─── SESSIONS TAB (회차 관리: 이름 변경 · 삭제) ────────────────────────────────
+let renamingSetId = null;
+
+function renderSessionsTab(){
+  const el = document.getElementById('page-content');
+  el.classList.remove('center-mode', 'wide');
+  renamingSetId = null;
+  el.innerHTML = `
+    ${guestBannerHtml()}
+    <div class="card">
+      <div class="card-title">회차 관리 (${examSets.length}개)</div>
+      <div class="card-sub">등록된 회차의 이름을 바꾸거나 삭제합니다. 문제 내용을 고치려면 "➕ 회차추가" 탭에서 ✏️ 수정을 사용하세요.</div>
+      <div id="sessions-list"></div>
+    </div>
+  `;
+  renderSessionsList();
+}
+
+function renderSessionsList(){
+  const el = document.getElementById('sessions-list');
+  if(!el) return;
+  if(!examSets.length){ el.innerHTML = `<div class="empty-hint">저장된 회차가 없습니다. "➕ 회차추가" 탭에서 먼저 만들어주세요.</div>`; return; }
+  el.innerHTML = examSets.slice().sort((a,b) => b.createdAt - a.createdAt).map(s => {
+    const isRenaming = renamingSetId === s.id;
+    return `
+    <div class="set-row">
+      <div class="set-body">
+        ${isRenaming ? `
+          <input type="text" id="rename-input-${s.id}" value="${escapeHtml(s.name)}" onkeydown="if(event.key==='Enter')saveSetRename('${s.id}');if(event.key==='Escape')cancelSetRename();" style="font-size:14px;font-weight:700;padding:6px 8px;border:1.5px solid #93C5FD;border-radius:6px;width:100%;max-width:280px">
+        ` : `<div class="set-name">${escapeHtml(s.name)}</div>`}
+        <div class="set-meta"><span>${s.questions.length}문제</span><span>${s.timeLimitMinutes}분</span><span>합격 ${s.passScore}점</span><span>과락 과목당 ${s.subjectFailScore != null ? s.subjectFailScore : 40}점 미만</span></div>
+      </div>
+      <div class="set-actions">
+        ${isRenaming ? `
+          <button class="icon-btn" title="저장" onclick="saveSetRename('${s.id}')">✅</button>
+          <button class="icon-btn" title="취소" onclick="cancelSetRename()">✖️</button>
+        ` : `
+          <button class="icon-btn" title="이름 변경" onclick="startSetRename('${s.id}')">✏️</button>
+          <button class="icon-btn" title="삭제" onclick="deleteExamSet('${s.id}')">🗑️</button>
+        `}
+      </div>
+    </div>`;
+  }).join('');
+  if(renamingSetId){
+    const input = document.getElementById('rename-input-' + renamingSetId);
+    if(input){ input.focus(); input.select(); }
+  }
+}
+
+function startSetRename(id){
+  renamingSetId = id;
+  renderSessionsList();
+}
+
+function cancelSetRename(){
+  renamingSetId = null;
+  renderSessionsList();
+}
+
+function saveSetRename(id){
+  const input = document.getElementById('rename-input-' + id);
+  const newName = input ? input.value.trim() : '';
+  if(!newName){ alert('회차 이름을 입력해주세요.'); return; }
+  const set = examSets.find(s => s.id === id);
+  if(!set) return;
+  set.name = newName;
+  saveSets();
+  persistSetUpsert(set);
+  renamingSetId = null;
+  renderSessionsList();
 }
 
 function renderSetList(){
