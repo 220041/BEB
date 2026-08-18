@@ -61,6 +61,10 @@ button{font-family:inherit}
 /* CARDS / FORMS */
 .card{background:var(--card-bg);border-radius:12px;padding:20px 24px;margin-bottom:16px;box-shadow:var(--card-shadow);border:1px solid var(--card-border)}
 .card-title{font-size:14.5px;font-weight:700;color:var(--table-header);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--section-line)}
+details.card:not([open]){padding-bottom:20px}
+details.card:not([open]) summary.card-title{margin-bottom:0;border-bottom:none}
+summary.card-title{cursor:pointer;user-select:none;list-style-position:outside}
+summary.card-title::-webkit-details-marker{color:var(--text-muted)}
 .card-sub{font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6}
 .form-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .form-row label{font-size:13px;font-weight:700;color:var(--text-main)}
@@ -429,18 +433,6 @@ function renderManageTab(){
     </div>
 
     <div class="card">
-      <div class="card-title">📋 문제 표로 붙여넣기</div>
-      <div class="card-sub">엑셀/구글시트에 아래 순서로 열을 만들어 채운 뒤 범위를 복사해서 붙여넣으세요. 과목명은 과목별 과락 판정에 쓰입니다.</div>
-      <div class="sample-box">과목 | 문제 | 보기1 | 보기2 | 보기3 | 보기4 | 정답(1~4) | 해설(선택) | batch(선택, 예: 01-01-01~01-01-02 PART 1)</div>
-      <textarea id="q-import-text" class="import-textarea" placeholder="표를 여기에 붙여넣으세요"></textarea>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="handleQuestionImport()">표에서 문제 추가</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('q-import-text').value=''">지우기</button>
-      </div>
-      <div id="q-import-msg"></div>
-    </div>
-
-    <div class="card">
       <div class="card-title">🧩 JSON으로 붙여넣기</div>
       <div class="card-sub">아래 형식의 JSON 배열을 붙여넣으세요.</div>
       <div class="sample-box">${escapeHtml(JSON.stringify([
@@ -454,6 +446,18 @@ function renderManageTab(){
       <div id="q-json-msg"></div>
     </div>
 
+    <details class="card">
+      <summary class="card-title">📋 문제 표로 붙여넣기 (엑셀 / 구글시트)</summary>
+      <div class="card-sub">엑셀/구글시트에 아래 순서로 열을 만들어 채운 뒤 범위를 복사해서 붙여넣으세요. 과목명은 과목별 과락 판정에 쓰입니다.</div>
+      <div class="sample-box">과목 | 문제 | 보기1 | 보기2 | 보기3 | 보기4 | 정답(1~4) | 해설(선택) | batch(선택, 예: 01-01-01~01-01-02 PART 1)</div>
+      <textarea id="q-import-text" class="import-textarea" placeholder="표를 여기에 붙여넣으세요"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="handleQuestionImport()">표에서 문제 추가</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('q-import-text').value=''">지우기</button>
+      </div>
+      <div id="q-import-msg"></div>
+    </details>
+
     <div class="card">
       <div class="card-title">등록된 문제 (${tmpQuestions.length}개)</div>
       <div id="tmp-q-list"></div>
@@ -464,10 +468,10 @@ function renderManageTab(){
       <div id="set-save-msg"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">저장된 회차 목록</div>
+    <details class="card">
+      <summary class="card-title">저장된 회차 목록</summary>
       <div id="set-list"></div>
-    </div>
+    </details>
   `;
   renderTmpQuestionList();
   renderSetList();

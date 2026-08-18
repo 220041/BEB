@@ -61,6 +61,10 @@ button{font-family:inherit}
 /* CARDS / FORMS */
 .card{background:var(--card-bg);border-radius:12px;padding:20px 24px;margin-bottom:16px;box-shadow:var(--card-shadow);border:1px solid var(--card-border)}
 .card-title{font-size:14.5px;font-weight:700;color:var(--table-header);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--section-line)}
+details.card:not([open]){padding-bottom:20px}
+details.card:not([open]) summary.card-title{margin-bottom:0;border-bottom:none}
+summary.card-title{cursor:pointer;user-select:none;list-style-position:outside}
+summary.card-title::-webkit-details-marker{color:var(--text-muted)}
 .card-sub{font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6}
 .form-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .form-row label{font-size:13px;font-weight:700;color:var(--text-main)}
@@ -505,15 +509,21 @@ function renderAddTab() {
   el.classList.remove('center-mode');
   el.innerHTML = `
     <div class="card">
-      <div class="card-title">새 항목 등록</div>
-      <div class="type-toggle">
-        <button id="type-fc-btn" class="${addType === 'flashcard' ? 'active' : ''}" onclick="setAddType('flashcard')">🗂 플래시카드 (질답)</button>
-        <button id="type-qz-btn" class="${addType === 'quiz' ? 'active' : ''}" onclick="setAddType('quiz')">📝 예상문제 (4지선다)</button>
+      <div class="card-title">일괄 등록 (JSON 붙여넣기) — 고급</div>
+      <div class="card-sub">AI로 생성했거나 이미 JSON 형태로 준비된 데이터가 있다면 이 방식이 더 정확합니다. 아래 형식의 JSON 배열을 붙여넣고 등록하세요. 이미 등록된 항목은 그대로 두고 새 항목만 추가됩니다.</div>
+      <div class="sample-box">${escapeHtml(JSON.stringify([
+        { type: 'flashcard', q: '심전도에서 P파가 의미하는 것은?', a: '심방의 탈분극', explanation: 'P파는 동방결절에서 시작된 흥분이 심방 전체로 퍼지는 과정을 반영한다.', tag: '기초의학', batch: '2024년 기출 1회차' },
+        { type: 'quiz', text: '다음 중 심전도 P파가 나타내는 것은?', choices: ['심방 탈분극', '심실 탈분극', '심실 재분극', '방실 전도 지연'], answer: 1, explanation: 'P파는 심방의 탈분극을 의미한다.', tag: '기초의학', batch: '2024년 기출 1회차' }
+      ], null, 2))}</div>
+      <textarea id="bulk-import-text" class="import-textarea" placeholder="여기에 JSON 배열을 붙여넣으세요"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="handleBulkImport()">일괄 등록</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('bulk-import-text').value=''">지우기</button>
       </div>
-      <div id="add-form-area"></div>
+      <div id="import-msg"></div>
     </div>
-    <div class="card">
-      <div class="card-title">📋 표로 붙여넣기 (엑셀 / 구글시트) — 추천</div>
+    <details class="card">
+      <summary class="card-title">📋 표로 붙여넣기 (엑셀 / 구글시트)</summary>
       <div class="card-sub">엑셀이나 구글시트에 아래 순서대로 열을 만들어 채운 뒤, 셀 범위를 그대로 복사(Ctrl+C)해서 아래 칸에 붙여넣으면 됩니다. 파일을 따로 저장할 필요 없이 복사·붙여넣기만 하면 되는 것이 가장 빠릅니다.</div>
       <div class="sample-box">열 순서: 유형(flashcard/quiz) | 질문 | 답(플래시카드용) | 보기1 | 보기2 | 보기3 | 보기4 | 정답(1~4) | 해설 | 태그(과목) | 분류(회차 등) | 중요(Y/N)
 
@@ -529,21 +539,15 @@ function renderAddTab() {
         <button class="btn btn-ghost" onclick="document.getElementById('table-import-text').value=''">지우기</button>
       </div>
       <div id="table-msg"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">일괄 등록 (JSON 붙여넣기) — 고급</div>
-      <div class="card-sub">AI로 생성했거나 이미 JSON 형태로 준비된 데이터가 있다면 이 방식이 더 정확합니다. 아래 형식의 JSON 배열을 붙여넣고 등록하세요. 이미 등록된 항목은 그대로 두고 새 항목만 추가됩니다.</div>
-      <div class="sample-box">${escapeHtml(JSON.stringify([
-        { type: 'flashcard', q: '심전도에서 P파가 의미하는 것은?', a: '심방의 탈분극', explanation: 'P파는 동방결절에서 시작된 흥분이 심방 전체로 퍼지는 과정을 반영한다.', tag: '기초의학', batch: '2024년 기출 1회차' },
-        { type: 'quiz', text: '다음 중 심전도 P파가 나타내는 것은?', choices: ['심방 탈분극', '심실 탈분극', '심실 재분극', '방실 전도 지연'], answer: 1, explanation: 'P파는 심방의 탈분극을 의미한다.', tag: '기초의학', batch: '2024년 기출 1회차' }
-      ], null, 2))}</div>
-      <textarea id="bulk-import-text" class="import-textarea" placeholder="여기에 JSON 배열을 붙여넣으세요"></textarea>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="handleBulkImport()">일괄 등록</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('bulk-import-text').value=''">지우기</button>
+    </details>
+    <details class="card" id="add-single-details" ${editingId ? 'open' : ''}>
+      <summary class="card-title">✏️ 새 항목 하나씩 등록</summary>
+      <div class="type-toggle">
+        <button id="type-fc-btn" class="${addType === 'flashcard' ? 'active' : ''}" onclick="setAddType('flashcard')">🗂 플래시카드 (질답)</button>
+        <button id="type-qz-btn" class="${addType === 'quiz' ? 'active' : ''}" onclick="setAddType('quiz')">📝 예상문제 (4지선다)</button>
       </div>
-      <div id="import-msg"></div>
-    </div>
+      <div id="add-form-area"></div>
+    </details>
   `;
   renderAddForm();
 }
@@ -947,6 +951,8 @@ function editItem(id) {
   switchPageTab('add');
   renderAddForm(it);
   document.getElementById(addType === 'flashcard' ? 'type-fc-btn' : 'type-qz-btn').classList.add('active');
+  const details = document.getElementById('add-single-details');
+  if (details) details.open = true;
 }
 
 function exportItems() {
