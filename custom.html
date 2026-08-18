@@ -1082,7 +1082,7 @@ function renderReviewPreview() {
     area.innerHTML = `<div class="review-preview-box"><div class="empty-hint">선택한 조건(${escapeHtml(reviewFilterSummary())})에 해당하는 항목이 없습니다.</div></div>`;
     return;
   }
-  const rows = matches.slice().sort((a, b) => b.createdAt - a.createdAt).map(it => {
+  const rows = matches.slice().sort(reviewDisplayOrder).map(it => {
     const preview = it.type === 'quiz' ? it.text : it.q;
     return `<div class="item-row">
       <div class="item-type-icon">${it.type === 'quiz' ? '📝' : '🗂'}</div>
