@@ -125,7 +125,6 @@ button{font-family:inherit}
 .review-setup.review-scope{gap:20px}
 .radio-row{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;cursor:pointer}
 .review-progress{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:14px}
-.session-toolbar{display:flex;justify-content:flex-end;margin-bottom:8px}
 .review-preview-box{margin-top:14px;border-top:1px solid var(--section-line);padding-top:14px}
 .review-preview-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;font-size:13.5px}
 .review-preview-list{max-height:340px;overflow-y:auto;border:1.5px solid #E5E7EB;border-radius:10px;padding:0 10px}
@@ -1177,11 +1176,6 @@ function renderReviewSession() {
   const reasons = reasonTags(item).map(r => `<span class="stat-chip stat-new">${escapeHtml(r)}</span>`).join(' ');
   el.innerHTML = `
     <div class="card" onclick="setTimeout(refocusKeyCapture, 0)">
-      ${guestMode ? '' : `
-      <div class="session-toolbar">
-        <button class="btn btn-danger btn-sm" onclick="deleteReviewQueueAll()">🗑 이 세트 전체 삭제 (${reviewQueue.length}개)</button>
-      </div>
-      `}
       <div class="review-progress">${reviewIdx + 1} / ${reviewQueue.length}　${reasons}</div>
       <div id="session-wrap"></div>
       <input id="session-key-capture" type="text" value="" autocomplete="off" spellcheck="false" tabindex="-1" oninput="this.value=''" style="position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;border:none;padding:0;margin:0">
@@ -1195,20 +1189,6 @@ function renderReviewSession() {
 function refocusKeyCapture() {
   const el = document.getElementById('session-key-capture');
   if (el) el.focus({ preventScroll: true });
-}
-
-function deleteReviewQueueAll() {
-  if (guestMode || !reviewQueue.length) return;
-  const n = reviewQueue.length;
-  if (!confirm(`현재 열려 있는 복습 세트 ${n}개 항목을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
-  const ids = new Set(reviewQueue.map(it => it.id));
-  reviewQueue.forEach(it => persistRemove(it.id));
-  items = items.filter(it => !ids.has(it.id));
-  saveItems();
-  reviewQueue = [];
-  reviewActive = false;
-  document.removeEventListener('keydown', handleSessionKeydown);
-  renderReviewTab();
 }
 
 function renderFlashcardSession(item) {
