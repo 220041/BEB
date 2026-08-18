@@ -129,6 +129,9 @@ summary.card-title::-webkit-details-marker{color:var(--text-muted)}
 .review-setup.review-scope{gap:20px}
 .radio-row{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;cursor:pointer}
 .review-progress{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:14px}
+.shortcut-toggle-row{display:flex;justify-content:center;margin-bottom:10px}
+.switch-label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;user-select:none}
+.switch-label input{cursor:pointer}
 .review-preview-box{margin-top:14px;border-top:1px solid var(--section-line);padding-top:14px}
 .review-preview-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;font-size:13.5px}
 .review-preview-list{max-height:340px;overflow-y:auto;border:1.5px solid #E5E7EB;border-radius:10px;padding:0 10px}
@@ -990,6 +993,7 @@ let reviewJudgments = {}; // itemId -> 'yes' | 'no' | 'confuse'
 let reviewSessionResults = []; // [{num, type, question, answer, judgment}]
 let reviewSessionStartTs = null;
 let reviewYes = 0, reviewNo = 0, reviewConfuse = 0;
+let reviewShortcutsEnabled = false; // 기본 OFF — 켜져 있으면 텍스트 드래그 선택/복사가 방해될 수 있음
 
 function getReviewPool() {
   return items.filter(it => {
@@ -1233,13 +1237,14 @@ function startReview() {
   reviewJudgments = {};
   reviewSessionResults = [];
   reviewYes = 0; reviewNo = 0; reviewConfuse = 0;
+  reviewShortcutsEnabled = false;
   reviewSessionStartTs = Date.now();
   document.addEventListener('keydown', handleSessionKeydown);
   renderReviewSession();
 }
 
 function handleSessionKeydown(e) {
-  if (!reviewActive || reviewIdx >= reviewQueue.length) return;
+  if (!reviewShortcutsEnabled || !reviewActive || reviewIdx >= reviewQueue.length) return;
   const ae = document.activeElement;
   const tag = (ae && ae.tagName) || '';
   const isKeyCapture = ae && ae.id === 'session-key-capture';
@@ -1320,15 +1325,26 @@ function renderReviewSession() {
   const item = reviewQueue[reviewIdx];
   const reasons = reasonTags(item).map(r => `<span class="stat-chip stat-new">${escapeHtml(r)}</span>`).join(' ');
   el.innerHTML = `
-    <div class="card" onclick="setTimeout(refocusKeyCapture, 0)">
+    <div class="card" ${reviewShortcutsEnabled ? `onclick="setTimeout(refocusKeyCapture, 0)"` : ''}>
+      <div class="shortcut-toggle-row">
+        <label class="switch-label">
+          <input type="checkbox" ${reviewShortcutsEnabled ? 'checked' : ''} onchange="toggleReviewShortcuts(this.checked)">
+          ⌨️ 단축키 사용 ${reviewShortcutsEnabled ? '(ON — 1/2/3/Enter로 진행, 텍스트 선택은 잘 안될 수 있어요)' : '(OFF — 버튼 클릭으로 진행, 해설 드래그·복사 자유롭게 가능)'}
+        </label>
+      </div>
       <div class="review-progress">${reviewIdx + 1} / ${reviewQueue.length}　${reasons}</div>
       <div id="session-wrap"></div>
-      <input id="session-key-capture" type="text" value="" autocomplete="off" spellcheck="false" tabindex="-1" oninput="this.value=''" style="position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;border:none;padding:0;margin:0">
+      ${reviewShortcutsEnabled ? `<input id="session-key-capture" type="text" value="" autocomplete="off" spellcheck="false" tabindex="-1" oninput="this.value=''" style="position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;border:none;padding:0;margin:0">` : ''}
     </div>
   `;
   if (item.type === 'flashcard') renderFlashcardSession(item);
   else renderQuizSession(item);
-  refocusKeyCapture();
+  if (reviewShortcutsEnabled) refocusKeyCapture();
+}
+
+function toggleReviewShortcuts(enabled) {
+  reviewShortcutsEnabled = enabled;
+  renderReviewSession();
 }
 
 function refocusKeyCapture() {
@@ -1336,10 +1352,16 @@ function refocusKeyCapture() {
   if (el) el.focus({ preventScroll: true });
 }
 
+function copySessionExplanation() {
+  const item = reviewQueue[reviewIdx];
+  if (!item || !item.explanation) return;
+  copyTextToClipboard(item.explanation, 'session-copy-msg', '해설이 복사되었습니다.');
+}
+
 function renderFlashcardSession(item) {
   reviewFlipped = false;
   const wrap = document.getElementById('session-wrap');
-  const expHtml = item.explanation ? `<div class="explanation">${escapeHtml(item.explanation)}</div>` : '';
+  const expHtml = item.explanation ? `<div class="explanation">${escapeHtml(item.explanation)}<div class="btn-row" style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="copySessionExplanation()">📋 해설 복사</button></div></div><div id="session-copy-msg"></div>` : '';
   wrap.innerHTML = `
     <div class="fc-card-outer">
       <div class="fc-card" id="session-fc-card" onclick="flipSessionCard()">
@@ -1410,7 +1432,11 @@ function renderQuizSession(item) {
         ${item.choices.map((c, ci) => `<button class="choice-btn" data-ci="${ci + 1}" onclick="pickSessionChoice(${ci + 1})">${ci + 1}. ${escapeHtml(c)}</button>`).join('')}
       </div>
       <div id="session-result" class="session-result" style="visibility:hidden">✅ 정답입니다</div>
-      <div class="explanation" id="session-exp" style="${item.explanation ? 'visibility:hidden' : 'display:none'}">${escapeHtml(item.explanation || '')}</div>
+      <div class="explanation" id="session-exp" style="${item.explanation ? 'visibility:hidden' : 'display:none'}">
+        ${escapeHtml(item.explanation || '')}
+        ${item.explanation ? `<div class="btn-row" style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="copySessionExplanation()">📋 해설 복사</button></div>` : ''}
+      </div>
+      <div id="session-copy-msg"></div>
       <div id="session-next-area" style="visibility:hidden">
         ${grade3ButtonsHtml()}
       </div>
