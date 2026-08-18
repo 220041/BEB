@@ -1104,6 +1104,7 @@ function renderReviewPreview() {
         <span>선택한 조건: ${escapeHtml(reviewFilterSummary())} — <strong>${matches.length}개</strong></span>
         <select onchange="setReviewSortMode(this.value)" style="font-size:12.5px;padding:6px 8px;border:1.5px solid #E5E7EB;border-radius:6px">
           <option value="code" ${reviewSortMode === 'code' ? 'selected' : ''}>정렬: 소단원 코드순</option>
+          <option value="qnum" ${reviewSortMode === 'qnum' ? 'selected' : ''}>정렬: Q번호순</option>
           <option value="input" ${reviewSortMode === 'input' ? 'selected' : ''}>정렬: 등록한 순서</option>
           <option value="newest" ${reviewSortMode === 'newest' ? 'selected' : ''}>정렬: 최근 등록순</option>
         </select>
@@ -1186,8 +1187,24 @@ function reviewDisplayOrder(a, b) {
   return 0;
 }
 
+// 문제 본문 맨 앞의 "Q10." 또는 "Q10)" 같은 Q번호를 찾는다.
+function reviewQNumberKey(it) {
+  const src = it.type === 'quiz' ? it.text : it.q;
+  const m = (src || '').match(/^\s*Q\s*(\d+)\s*[.\)]/i);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function reviewQNumberOrder(a, b) {
+  const ka = reviewQNumberKey(a), kb = reviewQNumberKey(b);
+  if (ka !== null && kb !== null) return ka - kb;
+  if (ka !== null) return -1;
+  if (kb !== null) return 1;
+  return 0;
+}
+
 // 정렬 모드에 따라 배열을 정렬해서 새 배열로 반환한다. list는 이미 "입력 순서"인 상태로 들어온다고 가정.
 function applyReviewSortMode(list, mode) {
+  if (mode === 'qnum') return list.slice().sort(reviewQNumberOrder);
   if (mode === 'newest') return list.slice().sort((a, b) => b.createdAt - a.createdAt);
   if (mode === 'input') return list.slice();
   return list.slice().sort(reviewDisplayOrder); // 'code' (기본)
