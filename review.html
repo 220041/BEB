@@ -1128,8 +1128,10 @@ function startReview() {
 
 function handleSessionKeydown(e) {
   if (!reviewActive || reviewIdx >= reviewQueue.length) return;
-  const tag = (document.activeElement && document.activeElement.tagName) || '';
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const ae = document.activeElement;
+  const tag = (ae && ae.tagName) || '';
+  const isKeyCapture = ae && ae.id === 'session-key-capture';
+  if (!isKeyCapture && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT')) return;
   const item = reviewQueue[reviewIdx];
   if (item.type === 'flashcard') {
     if (!reviewFlipped) {
@@ -1174,7 +1176,7 @@ function renderReviewSession() {
   const item = reviewQueue[reviewIdx];
   const reasons = reasonTags(item).map(r => `<span class="stat-chip stat-new">${escapeHtml(r)}</span>`).join(' ');
   el.innerHTML = `
-    <div class="card">
+    <div class="card" onclick="setTimeout(refocusKeyCapture, 0)">
       ${guestMode ? '' : `
       <div class="session-toolbar">
         <button class="btn btn-danger btn-sm" onclick="deleteReviewQueueAll()">🗑 이 세트 전체 삭제 (${reviewQueue.length}개)</button>
@@ -1182,10 +1184,17 @@ function renderReviewSession() {
       `}
       <div class="review-progress">${reviewIdx + 1} / ${reviewQueue.length}　${reasons}</div>
       <div id="session-wrap"></div>
+      <input id="session-key-capture" type="text" value="" autocomplete="off" spellcheck="false" tabindex="-1" oninput="this.value=''" style="position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;border:none;padding:0;margin:0">
     </div>
   `;
   if (item.type === 'flashcard') renderFlashcardSession(item);
   else renderQuizSession(item);
+  refocusKeyCapture();
+}
+
+function refocusKeyCapture() {
+  const el = document.getElementById('session-key-capture');
+  if (el) el.focus({ preventScroll: true });
 }
 
 function deleteReviewQueueAll() {
