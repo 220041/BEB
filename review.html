@@ -1163,8 +1163,17 @@ function batchSortKey(it) {
   return m[1].padStart(4, '0') + '-' + m[2].padStart(4, '0') + '-' + m[3].padStart(4, '0');
 }
 
+// 문제 본문 맨 앞의 "[02-01-01 소단원명]" 같은 소단원 코드가 있으면 그걸 우선 사용하고,
+// 없으면 batch(예: "02-01-01~02-01-03 PART 1")의 앞부분 번호로 대신 정렬한다.
+function reviewSortKey(it) {
+  const src = it.type === 'quiz' ? it.text : it.q;
+  const m = (src || '').match(/^\s*\[(\d+)-(\d+)-(\d+)/);
+  if (m) return m[1].padStart(4, '0') + '-' + m[2].padStart(4, '0') + '-' + m[3].padStart(4, '0');
+  return batchSortKey(it);
+}
+
 function reviewDisplayOrder(a, b) {
-  const ka = batchSortKey(a), kb = batchSortKey(b);
+  const ka = reviewSortKey(a), kb = reviewSortKey(b);
   if (ka !== null && kb !== null) return ka < kb ? -1 : ka > kb ? 1 : 0;
   if (ka !== null) return -1;
   if (kb !== null) return 1;
