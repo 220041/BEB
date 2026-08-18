@@ -983,6 +983,7 @@ let reviewFilterTag = 'all';
 let reviewFilterBatch = 'all';
 let reviewScope = 'all'; // 'all' | 'confusing'
 let reviewPreviewOpen = false;
+let reviewSortMode = 'code'; // 'code' | 'input' | 'newest'
 let reviewPendingGrade = null; // 'yes' | 'no' | 'confuse' | null (armed by 1/2/3, confirmed by Enter)
 let reviewJudgments = {}; // itemId -> 'yes' | 'no' | 'confuse'
 let reviewSessionResults = []; // [{num, type, question, answer, judgment}]
@@ -1082,7 +1083,7 @@ function renderReviewPreview() {
     area.innerHTML = `<div class="review-preview-box"><div class="empty-hint">선택한 조건(${escapeHtml(reviewFilterSummary())})에 해당하는 항목이 없습니다.</div></div>`;
     return;
   }
-  const rows = matches.slice().sort(reviewDisplayOrder).map(it => {
+  const rows = applyReviewSortMode(matches, reviewSortMode).map(it => {
     const preview = it.type === 'quiz' ? it.text : it.q;
     return `<div class="item-row">
       <div class="item-type-icon">${it.type === 'quiz' ? '📝' : '🗂'}</div>
@@ -1101,6 +1102,11 @@ function renderReviewPreview() {
     <div class="review-preview-box">
       <div class="review-preview-head">
         <span>선택한 조건: ${escapeHtml(reviewFilterSummary())} — <strong>${matches.length}개</strong></span>
+        <select onchange="setReviewSortMode(this.value)" style="font-size:12.5px;padding:6px 8px;border:1.5px solid #E5E7EB;border-radius:6px">
+          <option value="code" ${reviewSortMode === 'code' ? 'selected' : ''}>정렬: 소단원 코드순</option>
+          <option value="input" ${reviewSortMode === 'input' ? 'selected' : ''}>정렬: 등록한 순서</option>
+          <option value="newest" ${reviewSortMode === 'newest' ? 'selected' : ''}>정렬: 최근 등록순</option>
+        </select>
         ${guestMode ? '' : `<button class="btn btn-danger btn-sm" onclick="deleteReviewPoolAll()">🗑 이 항목 전체 삭제</button>`}
       </div>
       <div class="review-preview-list">${rows}</div>
@@ -1166,7 +1172,8 @@ function batchSortKey(it) {
 // 없으면 batch(예: "02-01-01~02-01-03 PART 1")의 앞부분 번호로 대신 정렬한다.
 function reviewSortKey(it) {
   const src = it.type === 'quiz' ? it.text : it.q;
-  const m = (src || '').match(/^\s*\[(\d+)-(\d+)-(\d+)/);
+  // 문제 본문 어디에 있든(앞에 "Q10." 같은 번호가 붙어있어도) [02-01-02 ...] 형태의 소단원 코드를 찾는다.
+  const m = (src || '').match(/\[(\d+)-(\d+)-(\d+)/);
   if (m) return m[1].padStart(4, '0') + '-' + m[2].padStart(4, '0') + '-' + m[3].padStart(4, '0');
   return batchSortKey(it);
 }
@@ -1179,15 +1186,26 @@ function reviewDisplayOrder(a, b) {
   return 0;
 }
 
+// 정렬 모드에 따라 배열을 정렬해서 새 배열로 반환한다. list는 이미 "입력 순서"인 상태로 들어온다고 가정.
+function applyReviewSortMode(list, mode) {
+  if (mode === 'newest') return list.slice().sort((a, b) => b.createdAt - a.createdAt);
+  if (mode === 'input') return list.slice();
+  return list.slice().sort(reviewDisplayOrder); // 'code' (기본)
+}
+
+function setReviewSortMode(mode) {
+  reviewSortMode = mode;
+  renderReviewPreview();
+}
+
 function startReview() {
   const sel = document.getElementById('review-count-select');
   if (sel) reviewCount = parseInt(sel.value);
   const pool = getReviewPool(); // 입력 순서(items 배열 순서) 그대로
   const picked = pool.slice().sort((a, b) => priorityScore(b) - priorityScore(a)).slice(0, reviewCount);
   const pickedIds = new Set(picked.map(it => it.id));
-  // 어떤 문제를 포함할지는 우선순위로 고르되, 화면 순서는 batch 번호(예: 02-01-01) 기준으로 정렬
-  // (batch 번호가 같으면 원래 입력 순서를 그대로 유지 — 안정 정렬)
-  reviewQueue = pool.filter(it => pickedIds.has(it.id)).sort(reviewDisplayOrder);
+  // 어떤 문제를 포함할지는 우선순위로 고르되, 화면 순서는 선택한 정렬 모드를 따른다.
+  reviewQueue = applyReviewSortMode(pool.filter(it => pickedIds.has(it.id)), reviewSortMode);
   reviewIdx = 0;
   reviewCorrect = 0;
   reviewWrong = 0;
