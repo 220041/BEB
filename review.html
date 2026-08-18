@@ -130,6 +130,9 @@ button{font-family:inherit}
 .review-preview-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;font-size:13.5px}
 .review-preview-list{max-height:340px;overflow-y:auto;border:1.5px solid #E5E7EB;border-radius:10px;padding:0 10px}
 .review-preview-list .item-row:last-child{border-bottom:none}
+.review-preview-edit{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.review-preview-edit select{font-size:13.5px;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px}
+.review-preview-edit input{flex:1;min-width:160px;font-size:13.5px;padding:8px 10px;border:1.5px solid #E5E7EB;border-radius:8px}
 #session-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 .fc-card-outer{width:100%;max-width:560px;perspective:1000px}
 .fc-card{width:100%;min-height:200px;display:grid;transform-style:preserve-3d;transition:transform .4s;cursor:pointer}
@@ -1048,6 +1051,8 @@ function renderReviewPreview() {
       </div>
     </div>`;
   }).join('');
+  const defaultEditField = reviewFilterBatch !== 'all' ? 'batch' : 'tag';
+  const defaultEditValue = defaultEditField === 'batch' ? reviewFilterBatch : (reviewFilterTag !== 'all' ? reviewFilterTag : '');
   area.innerHTML = `
     <div class="review-preview-box">
       <div class="review-preview-head">
@@ -1055,6 +1060,18 @@ function renderReviewPreview() {
         ${guestMode ? '' : `<button class="btn btn-danger btn-sm" onclick="deleteReviewPoolAll()">🗑 이 항목 전체 삭제</button>`}
       </div>
       <div class="review-preview-list">${rows}</div>
+      ${guestMode ? '' : `
+      <div class="review-preview-edit">
+        <select id="review-edit-field">
+          <option value="tag" ${defaultEditField === 'tag' ? 'selected' : ''}>태그</option>
+          <option value="batch" ${defaultEditField === 'batch' ? 'selected' : ''}>분류</option>
+        </select>
+        <span>→</span>
+        <input type="text" id="review-edit-value" placeholder="새 값 (비우면 삭제됨)" value="${escapeHtml(defaultEditValue)}">
+        <button class="btn btn-primary btn-sm" onclick="applyReviewBulkEdit()">이 ${matches.length}개에 일괄 적용</button>
+      </div>
+      <div id="review-edit-msg"></div>
+      `}
     </div>
   `;
 }
@@ -1069,6 +1086,29 @@ function deleteReviewPoolAll() {
   items = items.filter(it => !ids.has(it.id));
   saveItems();
   reviewPreviewOpen = false;
+  renderReviewTab();
+}
+
+function applyReviewBulkEdit() {
+  if (guestMode) return;
+  const fieldSel = document.getElementById('review-edit-field');
+  const valInput = document.getElementById('review-edit-value');
+  const field = fieldSel ? fieldSel.value : 'tag';
+  const newValue = valInput ? valInput.value.trim() : '';
+  const label = field === 'tag' ? '태그' : '분류';
+  const matches = getReviewPool();
+  if (!matches.length) { showMsg('review-edit-msg', '해당 조건의 항목이 없습니다.', false); return; }
+  const msg = newValue
+    ? `[${reviewFilterSummary()}] 조건의 ${matches.length}개 항목의 ${label}를 "${newValue}"(으)로 모두 변경할까요?`
+    : `[${reviewFilterSummary()}] 조건의 ${matches.length}개 항목의 ${label}를 모두 비울까요?`;
+  if (!confirm(msg)) return;
+  matches.forEach(it => {
+    it[field] = newValue;
+    persistUpsert(it);
+  });
+  saveItems();
+  if (field === 'tag') reviewFilterTag = newValue || 'all';
+  else reviewFilterBatch = newValue || 'all';
   renderReviewTab();
 }
 
