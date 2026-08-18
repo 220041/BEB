@@ -693,10 +693,11 @@ function handleBulkImport() {
   try { parsed = JSON.parse(raw); } catch (e) { showMsg('import-msg', 'JSON 형식이 올바르지 않습니다: ' + e.message, false); return; }
   if (!Array.isArray(parsed)) { showMsg('import-msg', '최상위는 배열([...]) 이어야 합니다.', false); return; }
   const seen = new Set(items.map(itemSignature));
+  const baseTs = Date.now();
   let added = 0, skipped = 0, dup = 0;
-  parsed.forEach(raw2 => {
+  parsed.forEach((raw2, i) => {
     if (!raw2 || typeof raw2 !== 'object') return;
-    const norm = normalizeItem(Object.assign({}, raw2, { id: null }));
+    const norm = normalizeItem(Object.assign({}, raw2, { id: null, createdAt: baseTs + i }));
     if (norm.type === 'flashcard' && (!norm.q || !norm.a)) { skipped++; return; }
     if (norm.type === 'quiz' && (!norm.text || norm.choices.some(c => !c))) { skipped++; return; }
     const sig = itemSignature(norm);
@@ -790,6 +791,7 @@ function handleTableImport() {
   let start = 0;
   if (rows.length && /^(유형|type)$/i.test((rows[0][0] || '').trim())) start = 1;
   const seen = new Set(items.map(itemSignature));
+  const baseTs = Date.now();
   let added = 0, skipped = 0, dup = 0;
   for (let i = start; i < rows.length; i++) {
     const r = rows[i];
@@ -807,6 +809,7 @@ function handleTableImport() {
       if (!question || !answerText) { skipped++; continue; }
       raw2 = { type: 'flashcard', q: question, a: answerText, explanation, tag, batch, starred: parseStarCell(starredCell) };
     }
+    raw2.createdAt = baseTs + i;
     const norm = normalizeItem(raw2);
     const sig = itemSignature(norm);
     if (seen.has(sig)) { dup++; continue; }
@@ -1157,7 +1160,8 @@ function startReview() {
   const sel = document.getElementById('review-count-select');
   if (sel) reviewCount = parseInt(sel.value);
   const pool = getReviewPool();
-  reviewQueue = pool.slice().sort((a, b) => priorityScore(b) - priorityScore(a)).slice(0, reviewCount);
+  reviewQueue = pool.slice().sort((a, b) => priorityScore(b) - priorityScore(a)).slice(0, reviewCount)
+    .sort((a, b) => a.createdAt - b.createdAt);
   reviewIdx = 0;
   reviewCorrect = 0;
   reviewWrong = 0;
