@@ -981,6 +981,7 @@ let reviewFlipped = false;
 let reviewCorrect = 0;
 let reviewWrong = 0;
 let reviewCount = 15;
+let reviewCountUserSet = false; // false면 필터가 바뀔 때마다 "전체"(maxN)로 자동 맞춰짐
 let reviewActive = false;
 let reviewFilterType = 'all';
 let reviewFilterTag = 'all';
@@ -1019,7 +1020,8 @@ function renderReviewTab() {
   const batches = Array.from(new Set(items.map(it => it.batch).filter(Boolean))).sort();
   const pool = getReviewPool();
   const maxN = Math.min(pool.length, 40);
-  if (reviewCount > maxN) reviewCount = maxN;
+  if (!reviewCountUserSet) reviewCount = maxN;
+  else if (reviewCount > maxN) reviewCount = maxN;
   const countOptions = [5, 10, 15, 20, 30, maxN]
     .filter((v, i, a) => v <= maxN && v > 0 && a.indexOf(v) === i)
     .sort((a, b) => a - b)
@@ -1051,7 +1053,7 @@ function renderReviewTab() {
       ${maxN > 0 ? `
       <div class="review-setup">
         <label style="font-size:13.5px;font-weight:600">복습 개수:</label>
-        <select id="review-count-select" onchange="reviewCount=parseInt(this.value)">
+        <select id="review-count-select" onchange="reviewCount=parseInt(this.value);reviewCountUserSet=true">
           ${countOptions}
         </select>
         <button class="btn btn-primary" onclick="startReview()">복습 시작</button>
